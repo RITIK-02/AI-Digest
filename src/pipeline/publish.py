@@ -306,6 +306,23 @@ def render_email_html(digest: dict) -> str:
     )
 
 
+def _unquote(value: str, name: str) -> str:
+    """Strip whitespace and any surrounding quote pair from an env value.
+
+    .env quoting is a dotenv convention that dotenv itself removes, but the
+    GitHub Actions secrets UI stores the literal bytes you paste. Copying a
+    value straight out of .env therefore lands the quotes in the secret, and
+    Resend 422s on the resulting unparseable address.
+    """
+    cleaned = value.strip()
+    for quote in ('"', "'"):
+        if len(cleaned) >= 2 and cleaned.startswith(quote) and cleaned.endswith(quote):
+            cleaned = cleaned[1:-1].strip()
+            print(f"[publish] {name} had surrounding {quote} quotes — stripped; fix the secret")
+            break
+    return cleaned
+
+
 def send_email(digest: dict) -> None:
     """Send the digest email. Never raises — the site data is already written
     and the LLM work is already paid for by this point, so a mail failure must
@@ -319,7 +336,10 @@ def send_email(digest: dict) -> None:
 
     # RESEND_TO may hold several comma-separated addresses; Resend wants them
     # as separate list entries and 422s on a single string containing commas.
-    recipients = [addr.strip() for addr in to_addr.split(",") if addr.strip()]
+    from_addr = _unquote(from_addr, "RESEND_FROM")
+    recipients = [
+        _unquote(addr, "RESEND_TO") for addr in to_addr.split(",") if _unquote(addr, "RESEND_TO")
+    ]
 
     try:
         resp = httpx.post(

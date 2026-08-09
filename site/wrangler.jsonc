@@ -1,0 +1,13 @@
+{
+  // Static-assets-only Worker: Astro builds to ./dist and Cloudflare serves it
+  // directly. There is deliberately no "main" — no Worker script runs on a
+  // request, which keeps the "everything is precomputed" rule intact.
+  //
+  // When the save/hide/thumbs-down endpoint lands, it gets added here as a
+  // "main" entry with an assets binding, not as server-side rendering.
+  "name": "ai-digest",
+  "compatibility_date": "2026-08-09",
+  "assets": {
+    "directory": "./dist"
+  }
+}
