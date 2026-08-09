@@ -1,0 +1,30 @@
+# Feed configuration. One block per source module in src/sources/.
+# Only arxiv is implemented so far — see CLAUDE.md "Source notes" for the rest.
+
+arxiv:
+  enabled: true
+  base_url: "https://export.arxiv.org/api/query"
+  # One request per 3 seconds, batched by category — arXiv's rate limit is real.
+  rate_limit_seconds: 3.0
+  max_results_per_category: 100
+  categories:
+    - cs.CL   # computation and language
+    - cs.CR   # cryptography and security
+    - cs.LG   # machine learning
+    - cs.AI
+    - stat.ML
+
+hn:
+  enabled: false
+
+bluesky:
+  enabled: false
+
+openreview:
+  enabled: false
+
+semantic_scholar:
+  enabled: false
+
+hf_daily_papers:
+  enabled: false

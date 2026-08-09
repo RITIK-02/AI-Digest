@@ -1,0 +1,126 @@
+---
+import StoryCard from "./StoryCard.astro";
+import { sectionLabel } from "../lib/format";
+
+interface Item {
+  title: string;
+  url: string;
+  summary: string | null;
+  why_it_matters: string | null;
+  score: number | null;
+  reason: string | null;
+  slot: string;
+}
+interface Props {
+  tag: string;
+  description: string;
+  items: Item[];
+  /** Sections with no source yet say so instead of quietly vanishing. */
+  unavailableReason?: string | null;
+}
+const { tag, description, items, unavailableReason } = Astro.props;
+const empty = items.length === 0;
+---
+
+{
+  empty ? (
+    <div class="section section--empty">
+      <span class="section__name">{sectionLabel(tag)}</span>
+      <span class="section__note meta">{unavailableReason ?? "nothing today"}</span>
+    </div>
+  ) : (
+    <details class="section">
+      <summary>
+        <span class="section__name">{sectionLabel(tag)}</span>
+        <span class="section__count meta">{items.length}</span>
+        <span class="section__sign meta" aria-hidden="true" />
+      </summary>
+      <div class="section__panel">
+        <p class="section__desc">{description}</p>
+        <ul class="section__items">
+          {items.map((it, i) => (
+            <StoryCard item={it} n={i + 1} context={tag} />
+          ))}
+        </ul>
+      </div>
+    </details>
+  )
+}
+
+<style>
+  .section {
+    border-top: 1px solid var(--rule);
+  }
+  .section summary {
+    display: flex;
+    align-items: baseline;
+    gap: 0.7rem;
+    padding: 0.9rem 0;
+    cursor: pointer;
+    list-style: none;
+  }
+  .section summary::-webkit-details-marker {
+    display: none;
+  }
+  .section summary:hover .section__name {
+    color: var(--accent);
+  }
+  .section__name {
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    transition: color 0.12s ease;
+  }
+  .section__count {
+    font-variant-numeric: tabular-nums;
+  }
+  /* +/− beats a rotating chevron here: it survives at 12px and says exactly
+     what the control does. */
+  .section__sign {
+    margin-left: auto;
+    color: var(--muted);
+    font-size: 0.85rem;
+    line-height: 1;
+  }
+  .section__sign::after {
+    content: "+";
+  }
+  .section[open] .section__sign::after {
+    content: "–";
+  }
+
+  .section__panel {
+    padding-bottom: 1rem;
+  }
+  .section__desc {
+    font-family: var(--font-text);
+    font-size: 0.975rem;
+    line-height: 1.55;
+    color: var(--muted);
+    max-width: var(--measure);
+    margin-bottom: 0.4rem;
+  }
+  .section__items {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .section__items > :global(.story:first-child) {
+    border-top-color: transparent;
+  }
+
+  .section--empty {
+    display: flex;
+    align-items: baseline;
+    gap: 0.7rem;
+    padding: 0.9rem 0;
+    color: var(--muted);
+  }
+  .section--empty .section__name {
+    font-weight: 500;
+  }
+  .section__note {
+    text-align: right;
+    margin-left: auto;
+    max-width: 26ch;
+  }
+</style>

@@ -1,0 +1,19 @@
+.env
+__pycache__/
+*.pyc
+.venv/
+.uv/
+uv.lock.tmp
+
+node_modules/
+site/dist/
+site/.astro/
+
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# db WAL/journal siblings — digest.db itself IS committed, these are ephemeral
+data/digest.db-shm
+data/digest.db-wal
+data/digest.db-journal

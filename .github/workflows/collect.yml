@@ -1,0 +1,61 @@
+name: collect
+
+# Resolve the triage batch, run summarize + brief, publish site data, send
+# the email, and commit. Cloudflare Pages watches this repo and builds
+# site/ on push — deploy is a build artifact push, not a step here. This
+# workflow still builds the site itself first so a broken build fails the
+# workflow loudly instead of silently reaching Pages.
+on:
+  schedule:
+    - cron: "0 5 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ai-digest-pipeline
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install Python dependencies
+        run: uv sync --frozen
+
+      - name: Run collect stage
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RESEND_FROM: ${{ secrets.RESEND_FROM }}
+          RESEND_TO: ${{ secrets.RESEND_TO }}
+        run: uv run python scripts/collect.py
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Build site (fail fast if broken)
+        working-directory: site
+        run: |
+          npm ci
+          npm run build
+
+      - name: Commit db + site data
+        run: |
+          git config user.name "ai-digest-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/digest.db site/src/data/digest.json
+          git diff --cached --quiet || git commit -m "collect: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git push

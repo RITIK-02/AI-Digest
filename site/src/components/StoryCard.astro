@@ -1,0 +1,171 @@
+---
+import { sectionLabel, slotLabel, sourceLabel } from "../lib/format";
+
+interface Item {
+  title: string;
+  url: string;
+  summary: string | null;
+  why_it_matters: string | null;
+  score: number | null;
+  reason: string | null;
+  slot: string;
+  sections?: string[];
+}
+interface Props {
+  item: Item;
+  /** Position in its list — rendered in the margin, tabular. */
+  n?: number;
+  /** Section this is being rendered inside, if any. A "Has code" badge on an
+   *  item sitting in the has-code section is noise, so the label drops out. */
+  context?: string;
+}
+const { item, n, context } = Astro.props;
+const tags = item.sections ?? [];
+// Only non-relevance slots carry a reason. Without it, exploration is
+// indistinguishable from a ranking bug — see CLAUDE.md.
+const explains = item.slot !== "relevance" && Boolean(item.reason);
+const showSlotLabel = explains && item.slot !== context;
+---
+
+<li class="story">
+  <div class="story__index" aria-hidden="true">{n !== undefined ? String(n).padStart(2, "0") : "—"}</div>
+
+  <div class="story__body">
+    <h3 class="story__title">
+      <a href={item.url} target="_blank" rel="noopener">{item.title}</a>
+    </h3>
+
+    <p class="story__meta meta">
+      <span class="story__source">{sourceLabel(item.url)}</span>
+      {tags.map((tag) => <span class="story__tag">{sectionLabel(tag)}</span>)}
+    </p>
+
+    {item.summary && <p class="story__summary">{item.summary}</p>}
+
+    {
+      item.why_it_matters && (
+        <p class="story__why">
+          <span class="story__why-label">Why it matters</span>
+          {item.why_it_matters}
+        </p>
+      )
+    }
+
+    {
+      explains && (
+        <p class="story__slot">
+          {showSlotLabel && <span class="story__slot-tag">{slotLabel(item.slot)}</span>}
+          {item.reason}
+        </p>
+      )
+    }
+  </div>
+</li>
+
+<style>
+  .story {
+    display: grid;
+    grid-template-columns: 2.5rem minmax(0, 1fr);
+    gap: 0 0.75rem;
+    padding: 1.6rem 0;
+    border-top: 1px solid var(--rule);
+  }
+  .story__index {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--muted);
+    padding-top: 0.35em;
+  }
+  .story__title {
+    font-size: 1.075rem;
+    line-height: 1.35;
+    text-wrap: pretty;
+  }
+  .story__title a {
+    text-decoration-color: color-mix(in srgb, currentColor 22%, transparent);
+  }
+  .story__title a:hover {
+    color: var(--accent);
+    text-decoration-color: currentColor;
+  }
+
+  .story__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.15rem 0.55rem;
+    margin-top: 0.4rem;
+  }
+  .story__source {
+    color: var(--fg-soft);
+  }
+  /* Tags read as a run of small caps separated by hairline dots, not as a row
+     of pills — the section is context, not a button. */
+  .story__tag + .story__tag,
+  .story__source + .story__tag {
+    position: relative;
+    padding-left: 0.6rem;
+  }
+  .story__tag + .story__tag::before,
+  .story__source + .story__tag::before {
+    content: "·";
+    position: absolute;
+    left: 0;
+    color: var(--rule-strong);
+  }
+
+  .story__summary {
+    font-family: var(--font-text);
+    font-size: 1rem;
+    line-height: 1.58;
+    color: var(--fg-soft);
+    margin-top: 0.7rem;
+    max-width: var(--measure);
+  }
+
+  .story__why {
+    font-family: var(--font-text);
+    font-size: 0.975rem;
+    line-height: 1.55;
+    color: var(--muted);
+    margin-top: 0.55rem;
+    max-width: var(--measure);
+  }
+  .story__why-label {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-right: 0.5rem;
+    white-space: nowrap;
+  }
+
+  .story__slot {
+    font-family: var(--font-text);
+    font-style: italic;
+    font-size: 0.95rem;
+    color: var(--muted);
+    margin-top: 0.7rem;
+    padding-left: 0.85rem;
+    border-left: 2px solid var(--accent);
+    max-width: var(--measure);
+  }
+  .story__slot-tag {
+    font-family: var(--font-mono);
+    font-style: normal;
+    font-size: 0.66rem;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-right: 0.5rem;
+  }
+
+  @media (max-width: 32rem) {
+    .story {
+      grid-template-columns: 1.85rem minmax(0, 1fr);
+      gap: 0 0.55rem;
+    }
+  }
+</style>

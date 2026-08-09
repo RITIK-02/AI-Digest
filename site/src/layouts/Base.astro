@@ -1,0 +1,347 @@
+---
+interface Props {
+  title: string;
+  /** Which nav item is current. */
+  page?: "today" | "sections";
+  /** Run provenance for the footer. Only ever rendered from real data. */
+  date?: string;
+  brief?: { provider?: string; model?: string; cost_usd?: number } | null;
+}
+const { title, page = "today", date, brief = null } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>{title}</title>
+    <meta
+      name="description"
+      content="A daily brief on LLM security, adversarial ML and time series foundation models."
+    />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ctext y='13' font-size='14'%3E%E2%97%A6%3C/text%3E%3C/svg%3E" />
+    <!-- Applied before first paint so a stored preference never flashes. -->
+    <script is:inline>
+      try {
+        const stored = localStorage.getItem("theme");
+        if (stored === "light" || stored === "dark") {
+          document.documentElement.dataset.theme = stored;
+        }
+      } catch (e) {
+        /* private mode — fall back to the system preference */
+      }
+    </script>
+    <style is:global>
+      /* ---------- tokens ---------- */
+      :root {
+        --bg: #f7f5f0;
+        --bg-sunk: #efece4;
+        --fg: #191817;
+        --fg-soft: #403c37;
+        --muted: #756f66;
+        --rule: #ded9ce;
+        --rule-strong: #c6c0b2;
+        --accent: #9c3d1c;
+        --accent-wash: #eee0d7;
+
+        --font-ui:
+          ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
+          sans-serif;
+        --font-text:
+          "Iowan Old Style", "Palatino Linotype", Palatino, "Source Serif 4", Charter,
+          Georgia, ui-serif, serif;
+        --font-mono:
+          ui-monospace, "SF Mono", "Cascadia Mono", "Segoe UI Mono", Menlo, Consolas,
+          monospace;
+
+        --measure: 36rem;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --bg: #101114;
+          --bg-sunk: #171a1e;
+          --fg: #e9e6e0;
+          --fg-soft: #c7c3bb;
+          --muted: #8c887f;
+          --rule: #26282d;
+          --rule-strong: #3a3d44;
+          --accent: #e08a5f;
+          --accent-wash: #2a201a;
+        }
+      }
+      :root[data-theme="dark"] {
+        --bg: #101114;
+        --bg-sunk: #171a1e;
+        --fg: #e9e6e0;
+        --fg-soft: #c7c3bb;
+        --muted: #8c887f;
+        --rule: #26282d;
+        --rule-strong: #3a3d44;
+        --accent: #e08a5f;
+        --accent-wash: #2a201a;
+      }
+
+      /* ---------- base ---------- */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      html {
+        -webkit-text-size-adjust: 100%;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font-family: var(--font-ui);
+        font-size: clamp(1rem, 0.97rem + 0.15vw, 1.0625rem);
+        line-height: 1.55;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+      ::selection {
+        background: var(--accent-wash);
+        color: var(--fg);
+      }
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 3px;
+        border-radius: 2px;
+      }
+
+      h1,
+      h2,
+      h3 {
+        font-weight: 600;
+        letter-spacing: -0.015em;
+        line-height: 1.2;
+        margin: 0;
+        text-wrap: balance;
+      }
+      p {
+        margin: 0;
+      }
+
+      a {
+        color: inherit;
+        text-decoration-thickness: 1px;
+        text-underline-offset: 0.16em;
+        text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
+        transition: color 0.12s ease, text-decoration-color 0.12s ease;
+      }
+      a:hover {
+        color: var(--accent);
+        text-decoration-color: currentColor;
+      }
+
+      /* ---------- shared pieces ---------- */
+      .wrap {
+        width: min(100% - 2.5rem, 44rem);
+        margin-inline: auto;
+      }
+      .prose {
+        font-family: var(--font-text);
+        font-size: 1.075rem;
+        line-height: 1.62;
+        color: var(--fg-soft);
+        max-width: var(--measure);
+      }
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .meta {
+        font-family: var(--font-mono);
+        font-size: 0.725rem;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+      .rule-heading {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        margin: 3.25rem 0 0;
+      }
+      .rule-heading::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: var(--rule);
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          transition: none !important;
+          animation: none !important;
+        }
+      }
+
+      /* ---------- site chrome ---------- */
+      .masthead {
+        border-bottom: 1px solid var(--rule);
+        background: var(--bg);
+      }
+      .masthead .wrap {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        padding: 0.95rem 0;
+      }
+      .wordmark {
+        font-family: var(--font-mono);
+        font-size: 0.775rem;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        text-decoration: none;
+        white-space: nowrap;
+      }
+      .wordmark .dot {
+        color: var(--accent);
+      }
+      .masthead nav {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 1.1rem;
+        font-family: var(--font-mono);
+        font-size: 0.725rem;
+      }
+      .masthead nav a {
+        color: var(--muted);
+        text-decoration: none;
+        padding-block: 0.15rem;
+        border-bottom: 1px solid transparent;
+      }
+      .masthead nav a:hover {
+        color: var(--fg);
+      }
+      .masthead nav a[aria-current="page"] {
+        color: var(--fg);
+        border-bottom-color: var(--accent);
+      }
+
+      #theme-toggle {
+        appearance: none;
+        background: none;
+        border: 0;
+        margin: 0;
+        padding: 0.15rem 0;
+        font: inherit;
+        color: var(--muted);
+        cursor: pointer;
+      }
+      #theme-toggle:hover {
+        color: var(--fg);
+      }
+      .lbl-light {
+        display: none;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) .lbl-dark {
+          display: none;
+        }
+        :root:not([data-theme="light"]) .lbl-light {
+          display: inline;
+        }
+      }
+      :root[data-theme="dark"] .lbl-dark {
+        display: none;
+      }
+      :root[data-theme="dark"] .lbl-light {
+        display: inline;
+      }
+      :root[data-theme="light"] .lbl-dark {
+        display: inline;
+      }
+      :root[data-theme="light"] .lbl-light {
+        display: none;
+      }
+
+      main {
+        padding-bottom: 4rem;
+      }
+
+      .colophon {
+        border-top: 1px solid var(--rule);
+        margin-top: 4rem;
+        padding: 1.5rem 0 3rem;
+      }
+      .colophon .wrap {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem 1.5rem;
+        justify-content: space-between;
+      }
+      .colophon a {
+        color: var(--muted);
+      }
+      .colophon a:hover {
+        color: var(--accent);
+      }
+    </style>
+  </head>
+
+  <body>
+    <header class="masthead">
+      <div class="wrap">
+        <a class="wordmark" href="/">AI Digest<span class="dot">.</span></a>
+        <nav>
+          <a href="/" aria-current={page === "today" ? "page" : undefined}>Today</a>
+          <a href="/archive/" aria-current={page === "sections" ? "page" : undefined}>
+            Sections
+          </a>
+          <button id="theme-toggle" type="button" aria-label="Switch colour theme">
+            <span class="lbl-dark">Dark</span><span class="lbl-light">Light</span>
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <slot />
+    </main>
+
+    <footer class="colophon">
+      <div class="wrap meta">
+        <span>
+          {date ? `Built ${date}` : "Built nightly"} · arXiv · embeddings on CPU
+        </span>
+        <span>
+          {
+            brief?.model
+              ? `brief: ${brief.model}${brief.provider ? ` via ${brief.provider}` : ""}${
+                  typeof brief.cost_usd === "number"
+                    ? ` · $${brief.cost_usd.toFixed(3)}`
+                    : ""
+                }`
+              : "no brief this run"
+          }
+        </span>
+      </div>
+    </footer>
+
+    <script is:inline>
+      document.getElementById("theme-toggle")?.addEventListener("click", () => {
+        const root = document.documentElement;
+        const current =
+          root.dataset.theme ||
+          (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        const next = current === "dark" ? "light" : "dark";
+        root.dataset.theme = next;
+        try {
+          localStorage.setItem("theme", next);
+        } catch (e) {
+          /* preference just won't persist */
+        }
+      });
+    </script>
+  </body>
+</html>

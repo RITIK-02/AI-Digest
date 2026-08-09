@@ -1,0 +1,68 @@
+---
+import Base from "../layouts/Base.astro";
+import Brief from "../components/Brief.astro";
+import StoryCard from "../components/StoryCard.astro";
+import digest from "../data/digest.json";
+import { plural } from "../lib/format";
+
+const stories = digest.stories;
+// What the "browse by section" page actually holds: everything that cleared
+// the bar, not just the flat front-page cut.
+const everything = stories.length + digest.stories_overflow.length;
+---
+
+<Base title={`AI Digest — ${digest.date}`} page="today" date={digest.date} brief={digest.brief}>
+  <div class="wrap">
+    <Brief brief={digest.brief} date={digest.date} storyCount={stories.length} />
+
+    {
+      stories.length > 0 ? (
+        <>
+          <h2 class="rule-heading eyebrow">Today's stories</h2>
+          <ol class="stories">
+            {stories.map((item, i) => (
+              <StoryCard item={item} n={i + 1} />
+            ))}
+          </ol>
+        </>
+      ) : (
+        <p class="empty prose">
+          Nothing cleared the bar today. That's a real signal, not an outage — the
+          pipeline ran and ranked, and none of it was worth your morning.
+        </p>
+      )
+    }
+
+    <p class="more">
+      <a href="/archive/">Browse all {plural(everything, "story", "stories")} by section</a>
+      <span aria-hidden="true"> →</span>
+    </p>
+  </div>
+</Base>
+
+<style>
+  .stories {
+    list-style: none;
+    margin: 1rem 0 0;
+    padding: 0;
+  }
+  .empty {
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--rule);
+  }
+  .more {
+    margin-top: 2.25rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--rule);
+    font-family: var(--font-mono);
+    font-size: 0.775rem;
+    color: var(--muted);
+  }
+  .more a {
+    color: var(--fg);
+  }
+  .more a:hover {
+    color: var(--accent);
+  }
+</style>

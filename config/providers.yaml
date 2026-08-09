@@ -1,0 +1,67 @@
+# Stage -> provider/model routing. Primary is a default, not a permanent
+# finding — re-check rates periodically (see CLAUDE.md "Routing table").
+#
+# Model strings confirmed against vendor docs 2026-08-08. OpenAI models are
+# pinned to dated snapshots rather than bare aliases (gpt-5-mini, gpt-5) —
+# there's a known community-reported issue where the Batch API resolves a
+# bare alias to a versioned id that 404s; the dated snapshot sidesteps it.
+# Pricing lives in src/llm/cost.py, not here.
+#
+# TEMPORARY: OpenAI's slot in the routing table below is filled by
+# `openrouter` (reaching the same GPT models through OpenRouter's proxy)
+# because the direct OpenAI account hit its billing hard limit on 2026-08-08.
+# The `openai` provider block is left defined and untouched — to swap back,
+# just change `provider: openrouter` back to `provider: openai` in the two
+# routing entries below and remove the openrouter ones, once the direct
+# account is unblocked.
+
+providers:
+  anthropic:
+    cheapest_tier: "claude-haiku-4-5-20251001"
+    mid_tier: "claude-sonnet-5"
+  openai:
+    cheapest_tier: "gpt-5-mini-2025-08-07"
+    mid_tier: "gpt-5-2025-08-07"
+  openrouter:
+    cheapest_tier: "openai/gpt-5-mini"
+    mid_tier: "openai/gpt-5"
+
+routing:
+  dedupe_adjudication:
+    primary: { provider: openrouter, tier: cheapest_tier }
+    fallback: { provider: anthropic, tier: cheapest_tier }
+  triage:
+    primary: { provider: openrouter, tier: cheapest_tier }
+    fallback: { provider: anthropic, tier: cheapest_tier }
+  summarize:
+    primary: { provider: anthropic, tier: mid_tier }
+    fallback: { provider: openrouter, tier: mid_tier }
+  brief:
+    primary: { provider: anthropic, tier: mid_tier }
+    fallback: { provider: openrouter, tier: mid_tier }
+
+# Batch API discount applies to all three providers; used for every stage.
+batch:
+  enabled: true
+
+# Provider-specific knobs that don't belong in the LLMClient protocol
+# (protocol stays at the intersection of the vendor APIs — see CLAUDE.md).
+provider_options:
+  anthropic:
+    prompt_caching: true
+  openai:
+    # OpenAI's strict JSON schema mode — used for triage in particular.
+    strict_json_schema: true
+    prompt_caching: true
+    # GPT-5-family models are reasoning models by default and will spend
+    # their whole max_tokens budget on invisible reasoning tokens before
+    # ever emitting output if left uncapped. Our tasks are well-specified
+    # classification/extraction, not open-ended problems — minimal effort
+    # is the right default. See src/llm/openai.py.
+    reasoning_effort: "minimal"
+  openrouter:
+    strict_json_schema: true
+    # Same reasoning-token problem as above, normalized to OpenRouter's own
+    # unified `reasoning` object shape rather than OpenAI's flat
+    # reasoning_effort field. See src/llm/openrouter.py.
+    reasoning_effort: "minimal"

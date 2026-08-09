@@ -1,0 +1,104 @@
+---
+import Base from "../layouts/Base.astro";
+import Section from "../components/Section.astro";
+import digest from "../data/digest.json";
+import { groupLabel, longDate } from "../lib/format";
+
+// The front page is a flat top-N across every section combined. This page is
+// the full catalog underneath it: every section's own top items plus whatever
+// overflowed past its slot budget, organized by topic. Nothing here is
+// "leftover" in the sense of being worse — a story can rank #1 in its section
+// and still not make the flat front-page cut.
+type SectionData = (typeof digest.sections)[keyof typeof digest.sections];
+const sections = Object.entries(digest.sections) as [string, SectionData][];
+const archive = digest.archive as Record<string, SectionData["items"]>;
+
+const combined = sections.map(([tag, section]) => ({
+  tag,
+  group: section.group,
+  description: section.description,
+  items: [...section.items, ...(archive[tag] ?? [])],
+  unavailableReason: section.unavailable_reason,
+}));
+
+// Taxonomy order is meaningful (research first, utility last) — preserve the
+// order the pipeline emitted rather than sorting by size. Every section stays
+// on the page even when it's empty: a quiet section and a missing section look
+// identical otherwise, and one of those is a bug.
+const groups: { group: string; sections: typeof combined }[] = [];
+for (const entry of combined) {
+  const bucket = groups.find((g) => g.group === entry.group);
+  if (bucket) bucket.sections.push(entry);
+  else groups.push({ group: entry.group, sections: [entry] });
+}
+
+const filled = combined.filter((s) => s.items.length > 0).length;
+---
+
+<Base
+  title={`AI Digest — by section — ${digest.date}`}
+  page="sections"
+  date={digest.date}
+  brief={digest.brief}
+>
+  <div class="wrap">
+    <header class="page-head">
+      <p class="eyebrow">By section · {longDate(digest.date)}</p>
+      <h1>Everything that cleared the bar</h1>
+      <p class="prose">
+        The full catalog behind today's front page — {filled} of {combined.length}
+        sections have something in them. A story can top its section and still miss
+        the flat front-page cut, so this is not the leftovers.
+      </p>
+    </header>
+
+    {
+      groups.map(({ group, sections: entries }) => (
+        <section class="group">
+          <h2 class="rule-heading eyebrow">{groupLabel(group)}</h2>
+          <div class="group__list">
+            {entries.map(({ tag, description, items, unavailableReason }) => (
+              <Section
+                tag={tag}
+                description={description}
+                items={items}
+                unavailableReason={unavailableReason}
+              />
+            ))}
+          </div>
+        </section>
+      ))
+    }
+
+    <p class="more">
+      <span aria-hidden="true">← </span><a href="/">Back to today's brief</a>
+    </p>
+  </div>
+</Base>
+
+<style>
+  .page-head {
+    padding: 3rem 0 0;
+  }
+  .page-head h1 {
+    font-size: clamp(1.7rem, 1.35rem + 1.6vw, 2.25rem);
+    margin: 0.55rem 0 1rem;
+    max-width: 16ch;
+  }
+  .group__list {
+    margin-top: 0.75rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .more {
+    margin-top: 2.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.775rem;
+    color: var(--muted);
+  }
+  .more a {
+    color: var(--fg);
+  }
+  .more a:hover {
+    color: var(--accent);
+  }
+</style>

@@ -1,0 +1,62 @@
+---
+import { inlineMarkdown, paragraphs } from "../lib/markdown";
+import { longDate, plural } from "../lib/format";
+
+interface BriefData {
+  content_md: string;
+  provider: string;
+  model: string;
+}
+interface Props {
+  brief: BriefData | null;
+  date: string;
+  storyCount: number;
+}
+const { brief, date, storyCount } = Astro.props;
+const paras = brief ? paragraphs(brief.content_md) : [];
+---
+
+<section class="lede">
+  <p class="eyebrow">
+    Daily brief{storyCount > 0 && ` · ${plural(storyCount, "story", "stories")}`}
+  </p>
+  <h1>{longDate(date)}</h1>
+  {
+    paras.length > 0 ? (
+      <div class="brief prose">
+        {paras.map((para, i) => (
+          <p class={i === 0 ? "brief__open" : undefined} set:html={inlineMarkdown(para)} />
+        ))}
+      </div>
+    ) : (
+      <p class="brief prose">
+        No brief was written for this run — the stories below are the whole digest today.
+      </p>
+    )
+  }
+</section>
+
+<style>
+  .lede {
+    padding: 3rem 0 0;
+  }
+  .lede h1 {
+    font-size: clamp(1.85rem, 1.4rem + 2vw, 2.6rem);
+    letter-spacing: -0.028em;
+    margin: 0.55rem 0 0;
+    max-width: 18ch;
+  }
+  .brief {
+    margin-top: 1.75rem;
+  }
+  .brief > p + p {
+    margin-top: 1.05em;
+  }
+  /* The opening paragraph is the one line that has to land — set a notch
+     larger and in full-strength ink, the rest recedes to reading grey. */
+  .brief__open {
+    font-size: 1.19rem;
+    line-height: 1.5;
+    color: var(--fg);
+  }
+</style>

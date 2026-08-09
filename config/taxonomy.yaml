@@ -1,0 +1,68 @@
+# Sections shown on the digest. A section on this list always shows its top
+# items regardless of click history — personalization orders within a section,
+# it never removes one. Hard cap of 5 stories/section/day; overflow -> archive.
+#
+# Tags are non-exclusive: an item can carry multiple section tags (e.g. a
+# jailbreak paper on TSFMs belongs in both llm-security and tsfm).
+
+research:
+  llm-security:
+    description: >
+      Attacks, defenses, and evaluation of LLM systems: jailbreaks, prompt
+      injection, data extraction, red-teaming, alignment-adjacent safety
+      failures with a security framing.
+  adversarial-ml:
+    description: >
+      Adversarial examples, robustness, poisoning, and attacks/defenses on
+      ML models generally (not LLM-specific).
+  tsfm:
+    description: >
+      Time series foundation models: pretraining, zero-shot forecasting,
+      benchmarks, architectures for time series.
+  alignment:
+    description: >
+      RLHF/RLAIF, preference learning, interpretability aimed at alignment,
+      value learning, scalable oversight.
+  agents:
+    description: >
+      LLM agents: tool use, planning, multi-agent systems, agentic
+      benchmarks and failure modes.
+  efficiency:
+    description: >
+      Inference/training efficiency: quantization, distillation, sparsity,
+      serving systems, hardware-aware methods.
+  evaluation:
+    description: >
+      Benchmarks, evaluation methodology, dataset/leakage critique, LLM-as-judge.
+
+ecosystem:
+  model-releases:
+    description: >
+      New model weights or major model announcements from labs.
+  policy:
+    description: >
+      AI policy, regulation, governance, export controls.
+  longform:
+    description: >
+      Essays, blog posts, and talks worth the extended read — not papers.
+
+utility:
+  deadlines:
+    description: >
+      Conference/workshop submission deadlines with countdown. Curated list
+      plus CFP detection. Always shown, never ranked away.
+  watchlist:
+    description: >
+      Named authors from config/interests.md — anything they post or
+      preprint surfaces regardless of score.
+  rising:
+    description: >
+      Ranked by traction velocity (HN points, social velocity, early
+      citations), not by relevance.
+  has-code:
+    description: >
+      Filter, not a ranker — papers in the user's areas with a working
+      code repo linked.
+  jobs:
+    description: >
+      Postdoc / research scientist / internship postings.
