@@ -307,6 +307,9 @@ def render_email_html(digest: dict) -> str:
 
 
 def send_email(digest: dict) -> None:
+    """Send the digest email. Never raises — the site data is already written
+    and the LLM work is already paid for by this point, so a mail failure must
+    not take down the run and discard the night's output."""
     api_key = os.environ.get("RESEND_API_KEY")
     from_addr = os.environ.get("RESEND_FROM")
     to_addr = os.environ.get("RESEND_TO")
@@ -314,18 +317,32 @@ def send_email(digest: dict) -> None:
         print("[publish] RESEND_API_KEY/RESEND_FROM/RESEND_TO not set — skipping email send")
         return
 
-    resp = httpx.post(
-        "https://api.resend.com/emails",
-        headers={"Authorization": f"Bearer {api_key}"},
-        json={
-            "from": from_addr,
-            "to": [to_addr],
-            "subject": f"AI Digest — {digest['date']}",
-            "html": render_email_html(digest),
-        },
-        timeout=30.0,
-    )
-    resp.raise_for_status()
+    # RESEND_TO may hold several comma-separated addresses; Resend wants them
+    # as separate list entries and 422s on a single string containing commas.
+    recipients = [addr.strip() for addr in to_addr.split(",") if addr.strip()]
+
+    try:
+        resp = httpx.post(
+            "https://api.resend.com/emails",
+            headers={"Authorization": f"Bearer {api_key}"},
+            json={
+                "from": from_addr.strip(),
+                "to": recipients,
+                "subject": f"AI Digest — {digest['date']}",
+                "html": render_email_html(digest),
+            },
+            timeout=30.0,
+        )
+    except httpx.HTTPError as exc:
+        print(f"[publish] email send failed: {exc} — digest still published")
+        return
+
+    if resp.is_error:
+        # Resend names the offending field in the body; without it a 422 is
+        # undiagnosable from the log alone.
+        print(f"[publish] email send failed: HTTP {resp.status_code} {resp.text}")
+        return
+
     print("[publish] email sent")
 
 
