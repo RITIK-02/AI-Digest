@@ -1,12 +1,12 @@
 {
-  "date": "2026-08-14",
+  "date": "2026-08-15",
   "brief": {
-    "run_date": "2026-08-14",
+    "run_date": "2026-08-15",
     "provider": "openrouter",
     "model": "openai/gpt-5",
-    "content_md": "BASIS is the most actionable LLM-security idea today: instead of blanket refuse-on-detect for prompt injection, it treats alignment and robust instructions as first-line defenses and adds a lightweight prefill-attention gate. Two sparse linear probes\u2014one to detect injection presence, one to predict an actual breach\u2014run in a cascaded, no-extra-inference pipeline using an attention competition ratio. Across six open models, they report near-perfect injection detection while cutting over-refusals on \u201csafe attack\u201d samples, especially under strong system prompts. If you\u2019re fighting over-refusal budgets in agents, this is a pragmatic, selective-prediction layer you can actually ship.\n\nThat dovetails with two red-team advances that raise the bar on transfer and attacker realism. PIMiner learns a reusable strategy library across dataset\u2013model pairs and transfers it to unseen targets in ~10 queries per sample, beating RL-based attackers on IPIArena and AgentDojo. SAVOR pushes further: a one-shot indirect injection built entirely offline via outcome-conditioned reflection, then fired once at an unseen target with no feedback, still topping prior attacks by 2.5\u201311.8 points. Together they pressure-test defenses that rely on interaction limits or target-specific tuning: if your evaluation only covers iterative attackers, you\u2019re underestimating risk.\n\nOn the agent-harness side, HarnessSafe is worth a careful read. It frames delayed violations as \u201cPersistent-Risk Lifecycles\u201d across seven carrier families (memory, tools, skills, etc.), then traces how far an attack gets and where it\u2019s stopped. Containment turns out to be highly carrier- and configuration-specific; attack success rates alone miss the lifecycle structure. If your pipeline has cross-session memory or skill libraries, this gives you a methodology to see where contamination actually propagates and to prioritize the right kill-switches.\n\nA companion measurement result on contamination: Persistent Semantic Entities show name binding is the dominant driver of long-lived cross-boundary persistence in tool-augmented agents; preference and instruction contamination barely decay, and contamination compounds across multi-stage pipelines. Context-isolated self-verification helps much more than keyword detectors. If you need a single operational takeaway: enforce strict name-binding hygiene and isolate self-checks; otherwise, your benign multi-tool workflow can ratchet contamination upward.\n\nSupply chain remains a soft underbelly. ElasticBack demonstrates a conditional, weight-free backdoor in a single agent skill by coupling a benign-looking trigger in user queries with a malicious rule inside the skill doc. It gets high ASR, near-zero FPR, preserves clean utility, transfers across models, and evades deployment-time checks. Pair that with SkillsMetric\u2019s static-analysis map of what\u2019s detectable in skills (great at exfil and stego, blind to host destruction via common shells and weak on prompt injection): static checks alone won\u2019t save you. You need provenance, semantic review, and runtime guards.\n\nSpeaking of runtime, DreamGuard is an elegant, low-latency guardrail that treats agent behavior as a sequence modeling problem: a compact recurrent latent tracks trajectory state, forecasts near-future latents, and fuses immediate-hazard and prefix-risk to intervene before tool calls. It routinely beats reactive baselines at ~25 ms overhead. This is a nice bridge between time-series modeling and agent safety; if you\u2019re already building TSFMs, your instincts and infra transfer well here.\n\nTwo papers probe the reliability of our safety measurement stack. \u201cMeasuring the Wrong Thing\u201d shows pre-generation harmful-intent scores can anti-rank successful jailbreaks once the same content is \u201cwrapped,\u201d and proposes Active Attention Probing as a content-independent coordinate to stabilize measurement. Separately, \u201cActivation Probes Surface Code-Security Signals\u2026\u201d finds linear probes on reviewer-model activations detect real-world vulns better than the models\u2019 own YES/NO outputs or CoT. Both argue for leaning on internal signals\u2014but validating where and how you measure them\u2014rather than trusting surface behavior or intent detectors.\n\nOutside your usual lane, but worth the coffee: Align-RAG for time series retrieval challenges the assumption that we need learned fusion. With closed-form amplitude rescaling and integer-lag phase alignment applied to retrieved past\u2013future windows, a frozen Chronos-Bolt beats a trained retrieval adapter on seven datasets; other frozen TSFMs gain 2.5\u201313.7% MSE without tuning. The analysis suggests frozen backbones already support dynamic in-context use of aligned demonstrations. If you\u2019re building forecasting-plus-LLM stacks, this is a free baseline and a reminder that good pre-alignment can outperform learned glue.\n\nRound out with a governance and deployment note: the telemetry/concealment paper formalizes a minimal-sufficient audit statistic, Merkle-chained discrete updates, an Ito-process analog for continuous-time weight drift, and a playbook for adversarial model hiding. The punchline is sober but useful: continuous telemetry narrows\u2014never replaces\u2014the need for periodic invasive audits. If you\u2019re contemplating self-updating agents or TSFMs online, design your logging and red-team budget with that dual regime in mind.",
-    "cost_usd": 0.032891,
-    "created_at": "2026-08-14T06:17:15.346530+00:00"
+    "content_md": "Coffee brief for today: security-first agentics with a side of time series\n\nBASIS is the cleanest practical advance: a prefill-attention probe that predicts when an injection is present and, crucially, whether it will actually breach robust instructions. Two sparse linear probes (existence and breach) run in a cascaded gate with no extra LLM calls. On six open models and multiple tasks they keep near-perfect injection detection while slashing over-refusal on \u201csafe-looking\u201d attack samples\u2014especially under robust templates. The shift here is from blanket refuse to per-sample breach prediction using attention competition ratios, aligning with selective prediction and giving you a drop\u2011in tool to reduce false positives without opening the door to real compromises.\n\nIf you want to pressure-test that kind of defense, PIMiner is the sharp new stick. It learns a strategy library for prompt injection by training over sequences of (dataset, target) pairs and then transfers to unseen models with about ten queries per sample. It posts high attack success on IPIArena and AgentDojo, beating RL-based red-teamers that don\u2019t generalize. Pair this with BASIS: PIMiner supplies diverse, transferable attack trajectories; BASIS provides low-latency breach-aware gating to study where robust instructions truly hold.\n\nZooming out, the Horizon Gap survey is the map you want handy for long-horizon agents. It distinguishes long-horizon from long-context and long-term memory, then shows why outcome-only signals deteriorate as horizons stretch: you need denser, step-level signals, better credit assignment, and trajectory diagnostics. Their taxonomy across planning, memory, execution, training, and evaluation intersects directly with security: long horizons amplify small safety leaks, and you must separate model competence from harness competence when attributing failure. Keep this in mind as you interpret any \u201cagent safety\u201d numbers below.\n\nSpeaking of harnesses, HarnessSafe gives you a carrier-aware way to evaluate delayed risks that hop across memory, tool caches, and skills. Instead of measuring a flat attack success rate, it traces persistent-risk lifecycles from entry to cross-carrier propagation to eventual violation, scoring where the attack is halted. Results show containment is fiercely carrier\u2011 and configuration\u2011specific; model and harness both shape outcomes, and ASR alone misses where the pipeline is brittle. This is the right lens for debugging contamination that surfaces minutes or sessions later.\n\nOn the supply-chain front, ElasticBack is a pointed reminder that \u201cskills\u201d are a new backdoor surface. It pairs a malicious rule in a skill file with a benign\u2011looking trigger in user queries, activating only on the conjunction\u2014no weight edits. High ASR with near\u2011zero FPR, preserved clean accuracy, and cross\u2011model transfer, evading common deployment-time defenses. If your agents load third\u2011party skills, you now have to audit rule\u2013trigger couplings, not just payload strings. Complement this with LoRAScan if you depend on adapters: monitoring a small subset of LoRA down-projection sites for activation spikes catches backdoor triggers at inference without merging adapters or retraining, with ~98% malicious rejection in their tests. Together they sketch a pragmatic defense stack for skills and adapters.\n\nA third attacker angle worth folding into your evals: SAVOR\u2019s one-shot indirect prompt injection. It distills attack strategies offline via outcome-conditioned reflection and arrives at test time with a single payload\u2014no iterative adaptation. It beats prior IPI attacks across agents and transfers across defenses. Why you care: defenses that rely on detecting adaptation loops or multi-turn probing won\u2019t see this coming; your guardrails need to work under single-shot constraints.\n\nFor trajectory reliability and risk estimation, two pieces complement each other. Beyond Single-Turn Confidence reevaluates uncertainty quantification for multi-turn agents: token-probability scores hinge on the aggregation rule you choose, reflexive self-assessments are strong cheap baselines, and black-box trajectory-equivalence/self-consistency often wins when you can spend compute. Meanwhile ProbGuard reframes safety as calibrated risk over the early output distribution, letting you stop unsafe generations in the first ten decoding steps while achieving far better calibration than standard guards. Read together, they argue for distribution-aware, trajectory-level risk meters rather than end-of-turn classifiers.\n\nFinally, outside your usual lane but surprisingly actionable for governance of self-adapting systems, the Telemetry and Concealment paper proposes a dual-regime logging architecture: a Merkle-style chain for discrete weight snapshots, an Ito-process analogue for continuous updates, and KL-based stopping-time logs, then catalogs six model-hiding attacks with matching countermeasures. The takeaway is sober: continuous telemetry narrows\u2014but cannot replace\u2014periodic invasive audits. If your roadmap includes on-line adaptation (for LLMs or time-series models), this gives you a concrete, architecture-agnostic telemetry design and a checklist of concealment tactics to red-team against.\n\nIf you have time for one more cross-cutting read, Persistent Semantic Entities shows how name binding drives long-lived contamination across tool-augmented pipelines. Preference/instruction contamination persists and compounds across stages, while naive keyword detectors overfire. Context-isolated self-verification cuts contamination by a median 36.5%. It\u2019s an uncomfortable but useful quantification of why \u201charmless\u201d artifacts keep resurfacing in multi-stage agents and why lifecycle-aware defenses like HarnessSafe\u2019s traces matter.\n\nThat\u2019s the meat today: breach-aware gating (BASIS), transferable/one-shot IPI attack tools (PIMiner, SAVOR), carrier- and lifecycle-aware evals (Horizon Gap, HarnessSafe, PSEs), practical supply-chain defenses (LoRAScan) and threats (ElasticBack), and calibrated, trajectory-level risk controls (ProbGuard, trajectory UQ), with a governance-side telemetry architecture for self-updating models.",
+    "cost_usd": 0.040137,
+    "created_at": "2026-08-15T05:21:17.551635+00:00"
   },
   "stories": [
     {
@@ -35,6 +35,20 @@
         "llm-security",
         "agents",
         "evaluation"
+      ]
+    },
+    {
+      "title": "Personalized Federated Sparse Adaptation of Time-Series Foundation Models",
+      "url": "http://arxiv.org/abs/2608.04695v1",
+      "summary": "The paper proposes a personalized federated sparse adaptation framework for TSFMs in building energy forecasting, using a heterogeneous temporal MoE adapter placed after the pretrained representation and a sequence-level router that assigns each 168-hour window to top-k experts specialized for distinct temporal structures. It evaluates global FL, local training, and personalized FL variants with globally shared vs client-private expert banks across 50 buildings and three TSFM backbones. Results show personalization consistently outperforms Global FL-MoE and Local MoE, the best sparse-adaptation strategy depends on backbone and metric, and routing reveals client-level expert specialization, expert concentration, and near-uniform routing across backbones, implying adaptation should be client- and backbone-aware.",
+      "why_it_matters": "Combines federated personalization with sparse MoE routing for TSFMs under non-IID meter data, offering actionable design signals (client-/backbone-aware adapters) relevant to secure on-device adaptation and privacy-preserving deployment.",
+      "score": 7.0,
+      "reason": "Federated personalization for TS foundation models directly matches the reader's primary interest in TSFMs and on-device/private data adaptation; MoE adapter and sparse adaptation are relevant to architecture and efficient adaptation.",
+      "slot": "relevance",
+      "sections": [
+        "tsfm",
+        "efficiency",
+        "has-code"
       ]
     },
     {
@@ -77,7 +91,9 @@
         "llm-security",
         "evaluation"
       ]
-    },
+    }
+  ],
+  "stories_overflow": [
     {
       "title": "Toward Metacognitive One-Shot Indirect Prompt Injection: Strategy Abstraction Via Outcome-Conditioned Reflection",
       "url": "http://arxiv.org/abs/2608.08795v1",
@@ -92,9 +108,7 @@
         "adversarial-ml",
         "evaluation"
       ]
-    }
-  ],
-  "stories_overflow": [
+    },
     {
       "title": "From Runnable to Verifiable: An Independent Reproducibility Study of LLM/Agent-Driven Vulnerability Validation Artifacts",
       "url": "http://arxiv.org/abs/2608.09567v1",
@@ -407,20 +421,6 @@
         "llm-security",
         "adversarial-ml",
         "evaluation"
-      ]
-    },
-    {
-      "title": "Personalized Federated Sparse Adaptation of Time-Series Foundation Models",
-      "url": "http://arxiv.org/abs/2608.04695v1",
-      "summary": "The paper proposes a personalized federated sparse adaptation framework for TSFMs in building energy forecasting, using a heterogeneous temporal MoE adapter placed after the pretrained representation and a sequence-level router that assigns each 168-hour window to top-k experts specialized for distinct temporal structures. It evaluates global FL, local training, and personalized FL variants with globally shared vs client-private expert banks across 50 buildings and three TSFM backbones. Results show personalization consistently outperforms Global FL-MoE and Local MoE, the best sparse-adaptation strategy depends on backbone and metric, and routing reveals client-level expert specialization, expert concentration, and near-uniform routing across backbones, implying adaptation should be client- and backbone-aware.",
-      "why_it_matters": "Combines federated personalization with sparse MoE routing for TSFMs under non-IID meter data, offering actionable design signals (client-/backbone-aware adapters) relevant to secure on-device adaptation and privacy-preserving deployment.",
-      "score": 7.0,
-      "reason": "Federated personalization for TS foundation models directly matches the reader's primary interest in TSFMs and on-device/private data adaptation; MoE adapter and sparse adaptation are relevant to architecture and efficient adaptation.",
-      "slot": "relevance",
-      "sections": [
-        "tsfm",
-        "efficiency",
-        "has-code"
       ]
     },
     {
@@ -872,8 +872,8 @@
     {
       "title": "Into the ORBIT for Time Series: Training Regimes for Foundation Models",
       "url": "http://arxiv.org/abs/2608.13262v1",
-      "summary": null,
-      "why_it_matters": null,
+      "summary": "The paper introduces ORBIT, a training paradigm for TSFMs that explicitly controls pre-training distributions via Bootstrap Multi-Level Sampling and Omni-Range Incremental Training. It trains Falcon-2.0, a univariate encoder-only Transformer with missingness-aware triple-channel patch tokenization and parallel patch prediction, under this regime. The authors also propose Rank-Guided Cross-Depth Alignment to align shallow and deep representations, and report strong zero-shot forecasting on GIFT-Eval and fev-bench across diverse domains and frequencies.",
+      "why_it_matters": "It provides a principled, controllable pretraining regime and lightweight representation alignment that could transfer to secure LLM pretraining curricula and to robust TSFM deployment across heterogeneous, imbalanced time-series corpora.",
       "score": 5.0,
       "reason": "Evaluation metric for synthetic limit-order-book time series is relevant for TSFM evaluation and assessing generative-model fidelity, with potential security implications for market-simulation attacks.",
       "slot": "relevance",
@@ -886,8 +886,8 @@
     {
       "title": "SpecRoll: Fast-Slow Verifier-Feedback Adaptation for Speculative Reinforcement Learning Rollouts",
       "url": "http://arxiv.org/abs/2608.04962v1",
-      "summary": null,
-      "why_it_matters": null,
+      "summary": "SpecRoll is a speculative rollout engine for RL post-training that preserves the target model\u2019s sampling distribution while adapting at two timescales via lightweight future-token heads and a Reflex module that uses delayed verifier feedback for bounded, local hidden-state corrections without backprop. A slow path updates head parameters only upon sustained degradation, and the system employs concurrency-aware sparse-tree verification with exact target verification, leaving the target rollout distribution and GRPO objective unchanged. On five models (1.5B\u201314B) and three math datasets, SpecRoll yields 1.26\u20132.15\u00d7 generation speedups and 1.21\u20132.04\u00d7 end-to-end speedups over vanilla GRPO, outperforming FastGRPO across 15 settings with an average end-to-end gain of 1.18\u00d7, and ablations show complementary benefits of the fast and slow paths.",
+      "why_it_matters": "It offers a practical, distribution-preserving way to speed RL rollouts with verifier feedback, improving throughput over FastGRPO without altering GRPO objectives\u2014relevant for secure, efficient training of reasoning LLMs.",
       "score": 4.0,
       "reason": "SpecRoll focuses on speculative decoding within RL rollouts to speed generation\u2014relevant for efficient agentic RLHF/rollouts but not directly on LLM security or time-series foundations.",
       "slot": "relevance",
@@ -899,8 +899,8 @@
     {
       "title": "PolicyKG: An Agentic LLM Pipeline for Translating Institutional Policies into SHACL Knowledge Graphs",
       "url": "http://arxiv.org/abs/2608.09028v1",
-      "summary": null,
-      "why_it_matters": null,
+      "summary": "PolicyKG is an agentic LLM pipeline that converts policy PDFs into SHACL via deontic sentence classification, FOL lifting, and a LangGraph workflow with validators, centered on a YAML Corpus Adapter that grounds predicates to a target ontology. On the AIT Policies and Procedures corpus, it reports 86.9% deontic classification accuracy (\u03ba=.709), SHACL F1=.866 on 69 shapes, 79.2% FOL coverage with the remainder using NL-to-SHACL fallback, and an audit placing the upper 95% bound on higher-order logic usage at 0.67%. Domain retargeting via registry swap improves GDPR property alignment (1/15\u219211/15; Fisher p<.001; h=1.53), but macro F1 drops to .370 on LexDeMod due to vocabulary mismatch, while outputs are hash-identical across runs.",
+      "why_it_matters": "Demonstrates a practical, auditable NL\u2192FOL\u2192SHACL pipeline with ontology-grounding and run determinism, highlighting domain shift/vocab grounding issues relevant to secure LLM agents and robust constraint generation.",
       "score": 4.0,
       "reason": "Practical pipeline for translating policies into formal constraints using LLMs and validators touches agentic system tooling and automated compliance verification, useful for governance/evaluation of agent behavior.",
       "slot": "relevance",
@@ -913,8 +913,8 @@
     {
       "title": "ActBench: Self-Evolving Benchmark of Behavioral Safety in Cowork Agents",
       "url": "http://arxiv.org/abs/2608.09476v1",
-      "summary": null,
-      "why_it_matters": null,
+      "summary": "The paper defines behavioral safety for cowork agents and presents ActBench, a self-evolving benchmark that evaluates behavior risk from execution trajectories via paired benign/adversarial cases with task-reachable payloads. It introduces a reward-guided beam search with reflection to optimize attack effectiveness and task utility, and a dual evidence verification mechanism using logs and LLM-based trajectory evidence to assess safety and utility. Evaluating 15 LLMs and 6 cowork agents over 24,000 trajectories, they report attack success rates varying 10.1%\u201394.4% across models under a fixed harness and 73.7%\u201394.4% across agents under a fixed base model, with higher variation across models and high attack success across harnesses.",
+      "why_it_matters": "Gives a trajectory-centric, evolving benchmark and attack/verification tools to stress-test and compare LLM-based agents\u2019 behavioral safety across APIs and execution spaces\u2014useful for red-teaming, agent tuning, and safety eval pipelines.",
       "score": 4.0,
       "reason": "Diffusion model merging backdoor mitigation is solid adversarial-ML work but targets generative image models rather than LLMs or time-series models\u2014peripheral relevance for methodology.",
       "slot": "relevance",
@@ -926,8 +926,8 @@
     {
       "title": "Cross-Corpus Evaluation of Generalizable Vulnerability Detection in IoT Firmware",
       "url": "http://arxiv.org/abs/2608.11492v1",
-      "summary": null,
-      "why_it_matters": null,
+      "summary": "The paper introduces IoTVulBench, a human-verified, contamination-screened benchmark for cross-corpus IoT firmware vulnerability detection, and evaluates five model architectures, two tuning methods, and three curriculum strategies with ensemble, distillation, and robustness analyses. Models trained on IoTVulBench outperform matched single-source datasets (MCC 0.58 vs. 0.44 for PrimeVul and 0.39 for D2A), with staged curriculum learning raising MCC to 0.69 and a diversity-optimized ensemble reaching 0.73, surpassing a static analyzer (0.31) and PrimeVul by large margins while maintaining 86% performance under identifier renaming and showing strong calibration and largely faithful explanations. At a 0.5% FPR, the model missed 21% of vulnerabilities versus 71% for the strongest comparator, indicating domain-matched data and curriculum design\u2014not model scale alone\u2014drive generalization in firmware vulnerability detection.",
+      "why_it_matters": "Provides a contamination-screened, human-verified benchmark and concrete training/curriculum/ensemble recipes that substantially improve cross-corpus generalization\u2014useful for LLM security evaluation and for designing data- and curriculum-centric pipelines beyond scaling.",
       "score": 4.0,
       "reason": "IoT firmware vulnerability detection benchmark is relevant to broader adversarial robustness and benchmark validity but outside core LLM/security or time\u2011series focus.",
       "slot": "relevance",
@@ -939,8 +939,8 @@
     {
       "title": "Uniform Herding: Exemplar Replay with Representation Refresh",
       "url": "http://arxiv.org/abs/2608.13061v1",
-      "summary": null,
-      "why_it_matters": null,
+      "summary": "The paper proposes Uniform Herding, which allocates a bounded active exemplar set across observed classes and refreshes exemplars via a bounded candidate pool under the current representation to better preserve earlier classes during replay. On CIFAR-100 with 10 class-incremental tasks, a ResNet-18 backbone, active budget M=2,000, retrieval budget b=64, and three seeds, it reports 44.00\u00b10.51% final average accuracy and 17.22\u00b10.43% forgetting, versus iCaRL\u2019s 42.33\u00b11.20% and 24.87\u00b11.11%. Within this protocol, replacing NME or herding reduced final accuracy, removing distillation increased forgetting, retrieval budget mattered less than active budget, and the iCaRL comparison is end-to-end without isolating refresh effects, with conclusions limited to this tested setup.",
+      "why_it_matters": "Replay exemplar selection/refresh trade-offs and budget sensitivity are central to continual learning pipelines relevant to secure, low-forgetting LLM adaptation and time-series model updates under constrained memory.",
       "score": 4.0,
       "reason": "Theoretical unification of generative models via path integrals is mathematically interesting and could inform sampling/robustness, but it's distant from the user's priority areas (LLM security and TSFM).",
       "slot": "relevance",
@@ -1097,20 +1097,6 @@
           ]
         },
         {
-          "title": "Intern-S2-Preview: Scientific Agentic Foundation Model",
-          "url": "http://arxiv.org/abs/2608.13505v1",
-          "summary": "Intern-S2-Preview introduces scientific agentic foundation models trained via multimodal pretraining on rendered scientific documents, interleaved image-text, and diverse scientific corpora, followed by a unified post-training stack of SFT, scalable multi-task RL, black- and white-box agentic RL, and on-policy distillation. The pipeline adds practical rollout/training techniques\u2014partial rollout with off-policy correction, adaptive length regularization, online speculative decoding, robust multi-task optimization, and trace-aware experience assembly\u2014and explores architecture-level extensions: a 397B model with time series modules for efficient long-sequence understanding and numerical forecasting, plus a separate Memory Decoder path for rapid specialization without changing the frozen backbone. Evaluations report competitive or leading results across scientific, multimodal, agentic, and general-purpose benchmarks, with time-series gains on SciTS and a MemDec-4B extension improving Biology-Instructions average from 56.92 to 60.32 without modifying the 397B backbone.",
-          "why_it_matters": "Brings a concrete agentic RL + multimodal + TS forecasting stack with stability tricks and a memory-augmented specialization path relevant to secure tool-use agents and time-series LLMs.",
-          "score": 6.0,
-          "reason": "Agentic multimodal scientific foundation model work intersects with agentic-system attack surfaces and long-horizon reasoning, relevant for security analysis though not focused on adversarial robustness.",
-          "slot": "relevance",
-          "sections": [
-            "agents",
-            "tsfm",
-            "longform"
-          ]
-        },
-        {
           "title": "A Six-Dimensional Taxonomy of Post-Training Adaptation Techniques with Applications in AI Governance",
           "url": "http://arxiv.org/abs/2608.06246v1",
           "summary": "This survey synthesizes post-training adaptation techniques\u2014spanning retraining, fine-tuning, parameter-efficient adaptation, alignment, RAG, model editing, unlearning, calibration, and multimodal instruction tuning\u2014and introduces a six-dimensional taxonomy by mechanism, goal, data requirement, persistence, structural scope, and model type. It clarifies conflated terms (e.g., fine-tuning vs. RAG vs. prompting), traces the evolution of adaptation across model eras, and maps relationships such as inheritance, supersession, hybridization, and layered deployment stacks. The work presents a vocabulary to support technical documentation, change tracking, and governance analysis, and highlights open challenges in evaluation, reproducibility, persistent inference-time adaptation, unlearning, multimodal adaptation, and governance-aware workflows.",
@@ -1136,6 +1122,21 @@
             "tsfm",
             "efficiency",
             "has-code"
+          ]
+        },
+        {
+          "title": "verdi: retrieval is not transfer for continual world model optimization",
+          "url": "http://arxiv.org/abs/2608.09537v1",
+          "summary": "The paper argues that retrieval is not transfer in optimizing pretrained world models: strategies validated on one model are only hypotheses for another and require target-side experimental validation. It introduces VERDI, a continual evidence-licensed optimization framework that builds Optimization Fingerprints via shared inference-time probes, retrieves prior strategies as ranked hypotheses, and validates them with a frozen target-side verifier while evolving probes when contradictions arise. Experiments on Ctrl-World, Cosmos, and RoboCoin report reduced search (68%), GPU cost (69%), negative transfer (0.34\u21920.06), and 83% sign accuracy in predicting transfer outcomes.",
+          "why_it_matters": "Offers a principled, verifier-gated alternative to recipe-style transfer for model optimization, aligning with secure/evidence-based LLM and time-series/world-model tuning where negative transfer and brittle heuristics are major pain points.",
+          "score": 7.0,
+          "reason": "Argues that retrieved strategies don't directly transfer for optimizing world models and proposes safeguarding transfer\u2014relevant to continual optimization of foundation world/time-series models and efficient automated optimization agents.",
+          "slot": "relevance",
+          "sections": [
+            "agents",
+            "tsfm",
+            "evaluation",
+            "efficiency"
           ]
         }
       ],
@@ -1336,20 +1337,6 @@
       "description": "Benchmarks, evaluation methodology, dataset/leakage critique, LLM-as-judge.",
       "items": [
         {
-          "title": "HarnessSafe: Evaluating Safety Across Persistent Carriers in Agent Harnesses",
-          "url": "http://arxiv.org/abs/2608.06984v1",
-          "summary": "The paper introduces HarnessSafe, a benchmark of 328 executable cases spanning seven persistent-carrier families to assess delayed safety risks in agent harnesses that persist state across tasks and sessions. Each case is defined as a Persistent-Risk Lifecycle that traces attacker influence from entry through cross-carrier persistence to a benign trigger and an observable violation, and a multi-stage, trace-based evaluation measures how far each attack progresses and where it is stopped. Experiments indicate containment is carrier-specific and depends strongly on the harness-model configuration, with both harness and model shaping outcomes and attack success rates failing to capture lifecycle progression patterns.",
-          "why_it_matters": "It offers a carrier-aware, trace-based methodology and dataset to dissect how safety risks propagate across memory/tools/skills in agentic systems\u2014complementing coarse success-rate metrics and informing defense design in LLM agents and persistent pipelines.",
-          "score": 9.0,
-          "reason": "Benchmarks delayed safety risks from persistent carriers in agent harnesses; directly targets attack surfaces (memory, tools, skills), evaluation methodology, and end-to-end exploit propagation \u2014 highly relevant to LLM security and agentic threat models.",
-          "slot": "relevance",
-          "sections": [
-            "llm-security",
-            "evaluation",
-            "agents"
-          ]
-        },
-        {
           "title": "Agent Against Agent: An Agentic System for Automatic Prompt Injection Red Teaming",
           "url": "http://arxiv.org/abs/2608.05108v1",
           "summary": "The paper proposes PIMiner, an agentic red-teaming system for prompt injection that trains over sequences of (dataset, target model) pairs to build a strategy library from scratch. At test time, it transfers this library to unseen target LLMs without additional training and uses only a small number of target-agent queries per sample (e.g., 10). Experiments show strong ASR on IPIArena (76.2% Gemini-2.5-Pro, 61.9% GPT-5.1, 42.9% Claude-Sonnet-4.5) and AgentDojo (86.7% Gemini-2.5-Pro, 53.3% GPT-5.1, 40.0% Claude-Sonnet-4.5), outperforming RL-based approaches that generalize poorly.",
@@ -1378,6 +1365,20 @@
           ]
         },
         {
+          "title": "HarnessSafe: Evaluating Safety Across Persistent Carriers in Agent Harnesses",
+          "url": "http://arxiv.org/abs/2608.06984v1",
+          "summary": "The paper introduces HarnessSafe, a benchmark of 328 executable cases spanning seven persistent-carrier families to assess delayed safety risks in agent harnesses that persist state across tasks and sessions. Each case is defined as a Persistent-Risk Lifecycle that traces attacker influence from entry through cross-carrier persistence to a benign trigger and an observable violation, and a multi-stage, trace-based evaluation measures how far each attack progresses and where it is stopped. Experiments indicate containment is carrier-specific and depends strongly on the harness-model configuration, with both harness and model shaping outcomes and attack success rates failing to capture lifecycle progression patterns.",
+          "why_it_matters": "It offers a carrier-aware, trace-based methodology and dataset to dissect how safety risks propagate across memory/tools/skills in agentic systems\u2014complementing coarse success-rate metrics and informing defense design in LLM agents and persistent pipelines.",
+          "score": 9.0,
+          "reason": "Benchmarks delayed safety risks from persistent carriers in agent harnesses; directly targets attack surfaces (memory, tools, skills), evaluation methodology, and end-to-end exploit propagation \u2014 highly relevant to LLM security and agentic threat models.",
+          "slot": "relevance",
+          "sections": [
+            "llm-security",
+            "evaluation",
+            "agents"
+          ]
+        },
+        {
           "title": "Matryoshka Language Model Suites",
           "url": "http://arxiv.org/abs/2608.09703v1",
           "summary": "The paper introduces a Matryoshka training framework that nests sub-models of increasing size into one end-to-end trained architecture, reducing total suite parameters and enabling step-wise distillation from the largest to all smaller sub-models. This structure is well-suited for speculative decoding because the draft model is contained within the verifier. A 500M/1.5B/3B suite matches independently trained baselines on benchmarks and perplexities while using 36% less training compute and yielding 14\u201326% higher speculative decoding throughput, with ablations provided on architectural choices.",
@@ -1398,20 +1399,6 @@
       "description": "New model weights or major model announcements from labs.",
       "items": [
         {
-          "title": "Telemetry and Concealment in Self-Adapting Generative AI: Logging Architecture, Adversarial Model Hiding, and the Limits of Detection",
-          "url": "http://arxiv.org/abs/2608.09069v1",
-          "summary": "The paper addresses governance for self-updating generative models by proposing a telemetry architecture that operates in discrete and continuous time, including a Minimal Sufficient Statistic for audits, a Merkle-chain for discrete weight sequences, an Ito-based continuous-time generalization, and KL divergence stopping-time logging. It then formalizes the Model Hiding Problem under adversarial providers and catalogs six attack strategies against the telemetry architecture across discrete and continuous time, providing a countermeasure for each. The result is a dual-regime approach where continuous telemetry narrows but cannot replace periodic invasive audits, aligning with traditional MRM pillars and remaining architecture-agnostic.",
-          "why_it_matters": "It offers concrete telemetry and adversarial-resilience mechanisms directly applicable to secure deployment and monitoring of self-adapting LLMs and time-series models where online weight updates break standard validation.",
-          "score": 9.0,
-          "reason": "Directly addresses governance and detection challenges for self-adapting generative models, including telemetry and concealment\u2014highly relevant to security, operational risk, and monitoring of adaptive LLMs.",
-          "slot": "relevance",
-          "sections": [
-            "policy",
-            "llm-security",
-            "model-releases"
-          ]
-        },
-        {
           "title": "LoRAScan: Detecting Backdoor Prompts in Low-Rank Adapters for Large Language Models via Down-Projection Activation Spikes",
           "url": "http://arxiv.org/abs/2608.06795v1",
           "summary": "The paper introduces LoRAScan, an adapter-aware defense that detects and rejects trigger-bearing inputs for potentially backdoored LoRA adapters at inference time without modifying adapter parameters. It exploits the observation that about 5% of LoRA insertion sites exhibit stable activations on clean inputs but show concentrated spikes in down-projection activations when a trigger is present; these sites are identified pre-deployment and monitored online. On standard LLM backdoor benchmarks, LoRAScan rejects approximately 98.49 of malicious inputs with a small error rate on clean inputs, outperforming existing defenses across diverse settings.",
@@ -1424,6 +1411,20 @@
             "adversarial-ml",
             "model-releases",
             "has-code"
+          ]
+        },
+        {
+          "title": "Telemetry and Concealment in Self-Adapting Generative AI: Logging Architecture, Adversarial Model Hiding, and the Limits of Detection",
+          "url": "http://arxiv.org/abs/2608.09069v1",
+          "summary": "The paper addresses governance for self-updating generative models by proposing a telemetry architecture that operates in discrete and continuous time, including a Minimal Sufficient Statistic for audits, a Merkle-chain for discrete weight sequences, an Ito-based continuous-time generalization, and KL divergence stopping-time logging. It then formalizes the Model Hiding Problem under adversarial providers and catalogs six attack strategies against the telemetry architecture across discrete and continuous time, providing a countermeasure for each. The result is a dual-regime approach where continuous telemetry narrows but cannot replace periodic invasive audits, aligning with traditional MRM pillars and remaining architecture-agnostic.",
+          "why_it_matters": "It offers concrete telemetry and adversarial-resilience mechanisms directly applicable to secure deployment and monitoring of self-adapting LLMs and time-series models where online weight updates break standard validation.",
+          "score": 9.0,
+          "reason": "Directly addresses governance and detection challenges for self-adapting generative models, including telemetry and concealment\u2014highly relevant to security, operational risk, and monitoring of adaptive LLMs.",
+          "slot": "relevance",
+          "sections": [
+            "policy",
+            "llm-security",
+            "model-releases"
           ]
         },
         {
@@ -1636,8 +1637,8 @@
         {
           "title": "ActBench: Self-Evolving Benchmark of Behavioral Safety in Cowork Agents",
           "url": "http://arxiv.org/abs/2608.09476v1",
-          "summary": null,
-          "why_it_matters": null,
+          "summary": "The paper defines behavioral safety for cowork agents and presents ActBench, a self-evolving benchmark that evaluates behavior risk from execution trajectories via paired benign/adversarial cases with task-reachable payloads. It introduces a reward-guided beam search with reflection to optimize attack effectiveness and task utility, and a dual evidence verification mechanism using logs and LLM-based trajectory evidence to assess safety and utility. Evaluating 15 LLMs and 6 cowork agents over 24,000 trajectories, they report attack success rates varying 10.1%\u201394.4% across models under a fixed harness and 73.7%\u201394.4% across agents under a fixed base model, with higher variation across models and high attack success across harnesses.",
+          "why_it_matters": "Gives a trajectory-centric, evolving benchmark and attack/verification tools to stress-test and compare LLM-based agents\u2019 behavioral safety across APIs and execution spaces\u2014useful for red-teaming, agent tuning, and safety eval pipelines.",
           "score": 4.0,
           "reason": "Diffusion model merging backdoor mitigation is solid adversarial-ML work but targets generative image models rather than LLMs or time-series models\u2014peripheral relevance for methodology.",
           "slot": "has-code",
@@ -2396,8 +2397,8 @@
       {
         "title": "Into the ORBIT for Time Series: Training Regimes for Foundation Models",
         "url": "http://arxiv.org/abs/2608.13262v1",
-        "summary": null,
-        "why_it_matters": null,
+        "summary": "The paper introduces ORBIT, a training paradigm for TSFMs that explicitly controls pre-training distributions via Bootstrap Multi-Level Sampling and Omni-Range Incremental Training. It trains Falcon-2.0, a univariate encoder-only Transformer with missingness-aware triple-channel patch tokenization and parallel patch prediction, under this regime. The authors also propose Rank-Guided Cross-Depth Alignment to align shallow and deep representations, and report strong zero-shot forecasting on GIFT-Eval and fev-bench across diverse domains and frequencies.",
+        "why_it_matters": "It provides a principled, controllable pretraining regime and lightweight representation alignment that could transfer to secure LLM pretraining curricula and to robust TSFM deployment across heterogeneous, imbalanced time-series corpora.",
         "score": 5.0,
         "reason": "Evaluation metric for synthetic limit-order-book time series is relevant for TSFM evaluation and assessing generative-model fidelity, with potential security implications for market-simulation attacks.",
         "slot": "relevance",
@@ -2410,8 +2411,8 @@
       {
         "title": "ActBench: Self-Evolving Benchmark of Behavioral Safety in Cowork Agents",
         "url": "http://arxiv.org/abs/2608.09476v1",
-        "summary": null,
-        "why_it_matters": null,
+        "summary": "The paper defines behavioral safety for cowork agents and presents ActBench, a self-evolving benchmark that evaluates behavior risk from execution trajectories via paired benign/adversarial cases with task-reachable payloads. It introduces a reward-guided beam search with reflection to optimize attack effectiveness and task utility, and a dual evidence verification mechanism using logs and LLM-based trajectory evidence to assess safety and utility. Evaluating 15 LLMs and 6 cowork agents over 24,000 trajectories, they report attack success rates varying 10.1%\u201394.4% across models under a fixed harness and 73.7%\u201394.4% across agents under a fixed base model, with higher variation across models and high attack success across harnesses.",
+        "why_it_matters": "Gives a trajectory-centric, evolving benchmark and attack/verification tools to stress-test and compare LLM-based agents\u2019 behavioral safety across APIs and execution spaces\u2014useful for red-teaming, agent tuning, and safety eval pipelines.",
         "score": 4.0,
         "reason": "Diffusion model merging backdoor mitigation is solid adversarial-ML work but targets generative image models rather than LLMs or time-series models\u2014peripheral relevance for methodology.",
         "slot": "relevance",
@@ -2423,8 +2424,8 @@
       {
         "title": "Cross-Corpus Evaluation of Generalizable Vulnerability Detection in IoT Firmware",
         "url": "http://arxiv.org/abs/2608.11492v1",
-        "summary": null,
-        "why_it_matters": null,
+        "summary": "The paper introduces IoTVulBench, a human-verified, contamination-screened benchmark for cross-corpus IoT firmware vulnerability detection, and evaluates five model architectures, two tuning methods, and three curriculum strategies with ensemble, distillation, and robustness analyses. Models trained on IoTVulBench outperform matched single-source datasets (MCC 0.58 vs. 0.44 for PrimeVul and 0.39 for D2A), with staged curriculum learning raising MCC to 0.69 and a diversity-optimized ensemble reaching 0.73, surpassing a static analyzer (0.31) and PrimeVul by large margins while maintaining 86% performance under identifier renaming and showing strong calibration and largely faithful explanations. At a 0.5% FPR, the model missed 21% of vulnerabilities versus 71% for the strongest comparator, indicating domain-matched data and curriculum design\u2014not model scale alone\u2014drive generalization in firmware vulnerability detection.",
+        "why_it_matters": "Provides a contamination-screened, human-verified benchmark and concrete training/curriculum/ensemble recipes that substantially improve cross-corpus generalization\u2014useful for LLM security evaluation and for designing data- and curriculum-centric pipelines beyond scaling.",
         "score": 4.0,
         "reason": "IoT firmware vulnerability detection benchmark is relevant to broader adversarial robustness and benchmark validity but outside core LLM/security or time\u2011series focus.",
         "slot": "relevance",
@@ -2436,8 +2437,8 @@
       {
         "title": "Uniform Herding: Exemplar Replay with Representation Refresh",
         "url": "http://arxiv.org/abs/2608.13061v1",
-        "summary": null,
-        "why_it_matters": null,
+        "summary": "The paper proposes Uniform Herding, which allocates a bounded active exemplar set across observed classes and refreshes exemplars via a bounded candidate pool under the current representation to better preserve earlier classes during replay. On CIFAR-100 with 10 class-incremental tasks, a ResNet-18 backbone, active budget M=2,000, retrieval budget b=64, and three seeds, it reports 44.00\u00b10.51% final average accuracy and 17.22\u00b10.43% forgetting, versus iCaRL\u2019s 42.33\u00b11.20% and 24.87\u00b11.11%. Within this protocol, replacing NME or herding reduced final accuracy, removing distillation increased forgetting, retrieval budget mattered less than active budget, and the iCaRL comparison is end-to-end without isolating refresh effects, with conclusions limited to this tested setup.",
+        "why_it_matters": "Replay exemplar selection/refresh trade-offs and budget sensitivity are central to continual learning pipelines relevant to secure, low-forgetting LLM adaptation and time-series model updates under constrained memory.",
         "score": 4.0,
         "reason": "Theoretical unification of generative models via path integrals is mathematically interesting and could inform sampling/robustness, but it's distant from the user's priority areas (LLM security and TSFM).",
         "slot": "relevance",
@@ -2448,21 +2449,6 @@
       }
     ],
     "tsfm": [
-      {
-        "title": "verdi: retrieval is not transfer for continual world model optimization",
-        "url": "http://arxiv.org/abs/2608.09537v1",
-        "summary": "The paper argues that retrieval is not transfer in optimizing pretrained world models: strategies validated on one model are only hypotheses for another and require target-side experimental validation. It introduces VERDI, a continual evidence-licensed optimization framework that builds Optimization Fingerprints via shared inference-time probes, retrieves prior strategies as ranked hypotheses, and validates them with a frozen target-side verifier while evolving probes when contradictions arise. Experiments on Ctrl-World, Cosmos, and RoboCoin report reduced search (68%), GPU cost (69%), negative transfer (0.34\u21920.06), and 83% sign accuracy in predicting transfer outcomes.",
-        "why_it_matters": "Offers a principled, verifier-gated alternative to recipe-style transfer for model optimization, aligning with secure/evidence-based LLM and time-series/world-model tuning where negative transfer and brittle heuristics are major pain points.",
-        "score": 7.0,
-        "reason": "Argues that retrieved strategies don't directly transfer for optimizing world models and proposes safeguarding transfer\u2014relevant to continual optimization of foundation world/time-series models and efficient automated optimization agents.",
-        "slot": "relevance",
-        "sections": [
-          "agents",
-          "tsfm",
-          "evaluation",
-          "efficiency"
-        ]
-      },
       {
         "title": "The Label Defines the Timescale: Trait-State Limits of Temporal-Aggregate Learning",
         "url": "http://arxiv.org/abs/2608.01587v1",
@@ -2503,6 +2489,20 @@
           "tsfm",
           "agents",
           "efficiency"
+        ]
+      },
+      {
+        "title": "Intern-S2-Preview: Scientific Agentic Foundation Model",
+        "url": "http://arxiv.org/abs/2608.13505v1",
+        "summary": "Intern-S2-Preview introduces scientific agentic foundation models trained via multimodal pretraining on rendered scientific documents, interleaved image-text, and diverse scientific corpora, followed by a unified post-training stack of SFT, scalable multi-task RL, black- and white-box agentic RL, and on-policy distillation. The pipeline adds practical rollout/training techniques\u2014partial rollout with off-policy correction, adaptive length regularization, online speculative decoding, robust multi-task optimization, and trace-aware experience assembly\u2014and explores architecture-level extensions: a 397B model with time series modules for efficient long-sequence understanding and numerical forecasting, plus a separate Memory Decoder path for rapid specialization without changing the frozen backbone. Evaluations report competitive or leading results across scientific, multimodal, agentic, and general-purpose benchmarks, with time-series gains on SciTS and a MemDec-4B extension improving Biology-Instructions average from 56.92 to 60.32 without modifying the 397B backbone.",
+        "why_it_matters": "Brings a concrete agentic RL + multimodal + TS forecasting stack with stability tricks and a memory-augmented specialization path relevant to secure tool-use agents and time-series LLMs.",
+        "score": 6.0,
+        "reason": "Agentic multimodal scientific foundation model work intersects with agentic-system attack surfaces and long-horizon reasoning, relevant for security analysis though not focused on adversarial robustness.",
+        "slot": "relevance",
+        "sections": [
+          "agents",
+          "tsfm",
+          "longform"
         ]
       },
       {
@@ -2549,8 +2549,8 @@
       {
         "title": "Into the ORBIT for Time Series: Training Regimes for Foundation Models",
         "url": "http://arxiv.org/abs/2608.13262v1",
-        "summary": null,
-        "why_it_matters": null,
+        "summary": "The paper introduces ORBIT, a training paradigm for TSFMs that explicitly controls pre-training distributions via Bootstrap Multi-Level Sampling and Omni-Range Incremental Training. It trains Falcon-2.0, a univariate encoder-only Transformer with missingness-aware triple-channel patch tokenization and parallel patch prediction, under this regime. The authors also propose Rank-Guided Cross-Depth Alignment to align shallow and deep representations, and report strong zero-shot forecasting on GIFT-Eval and fev-bench across diverse domains and frequencies.",
+        "why_it_matters": "It provides a principled, controllable pretraining regime and lightweight representation alignment that could transfer to secure LLM pretraining curricula and to robust TSFM deployment across heterogeneous, imbalanced time-series corpora.",
         "score": 5.0,
         "reason": "Evaluation metric for synthetic limit-order-book time series is relevant for TSFM evaluation and assessing generative-model fidelity, with potential security implications for market-simulation attacks.",
         "slot": "relevance",
@@ -3020,8 +3020,8 @@
       {
         "title": "SpecRoll: Fast-Slow Verifier-Feedback Adaptation for Speculative Reinforcement Learning Rollouts",
         "url": "http://arxiv.org/abs/2608.04962v1",
-        "summary": null,
-        "why_it_matters": null,
+        "summary": "SpecRoll is a speculative rollout engine for RL post-training that preserves the target model\u2019s sampling distribution while adapting at two timescales via lightweight future-token heads and a Reflex module that uses delayed verifier feedback for bounded, local hidden-state corrections without backprop. A slow path updates head parameters only upon sustained degradation, and the system employs concurrency-aware sparse-tree verification with exact target verification, leaving the target rollout distribution and GRPO objective unchanged. On five models (1.5B\u201314B) and three math datasets, SpecRoll yields 1.26\u20132.15\u00d7 generation speedups and 1.21\u20132.04\u00d7 end-to-end speedups over vanilla GRPO, outperforming FastGRPO across 15 settings with an average end-to-end gain of 1.18\u00d7, and ablations show complementary benefits of the fast and slow paths.",
+        "why_it_matters": "It offers a practical, distribution-preserving way to speed RL rollouts with verifier feedback, improving throughput over FastGRPO without altering GRPO objectives\u2014relevant for secure, efficient training of reasoning LLMs.",
         "score": 4.0,
         "reason": "SpecRoll focuses on speculative decoding within RL rollouts to speed generation\u2014relevant for efficient agentic RLHF/rollouts but not directly on LLM security or time-series foundations.",
         "slot": "relevance",
@@ -3033,8 +3033,8 @@
       {
         "title": "PolicyKG: An Agentic LLM Pipeline for Translating Institutional Policies into SHACL Knowledge Graphs",
         "url": "http://arxiv.org/abs/2608.09028v1",
-        "summary": null,
-        "why_it_matters": null,
+        "summary": "PolicyKG is an agentic LLM pipeline that converts policy PDFs into SHACL via deontic sentence classification, FOL lifting, and a LangGraph workflow with validators, centered on a YAML Corpus Adapter that grounds predicates to a target ontology. On the AIT Policies and Procedures corpus, it reports 86.9% deontic classification accuracy (\u03ba=.709), SHACL F1=.866 on 69 shapes, 79.2% FOL coverage with the remainder using NL-to-SHACL fallback, and an audit placing the upper 95% bound on higher-order logic usage at 0.67%. Domain retargeting via registry swap improves GDPR property alignment (1/15\u219211/15; Fisher p<.001; h=1.53), but macro F1 drops to .370 on LexDeMod due to vocabulary mismatch, while outputs are hash-identical across runs.",
+        "why_it_matters": "Demonstrates a practical, auditable NL\u2192FOL\u2192SHACL pipeline with ontology-grounding and run determinism, highlighting domain shift/vocab grounding issues relevant to secure LLM agents and robust constraint generation.",
         "score": 4.0,
         "reason": "Practical pipeline for translating policies into formal constraints using LLMs and validators touches agentic system tooling and automated compliance verification, useful for governance/evaluation of agent behavior.",
         "slot": "relevance",
@@ -3232,8 +3232,8 @@
       {
         "title": "SpecRoll: Fast-Slow Verifier-Feedback Adaptation for Speculative Reinforcement Learning Rollouts",
         "url": "http://arxiv.org/abs/2608.04962v1",
-        "summary": null,
-        "why_it_matters": null,
+        "summary": "SpecRoll is a speculative rollout engine for RL post-training that preserves the target model\u2019s sampling distribution while adapting at two timescales via lightweight future-token heads and a Reflex module that uses delayed verifier feedback for bounded, local hidden-state corrections without backprop. A slow path updates head parameters only upon sustained degradation, and the system employs concurrency-aware sparse-tree verification with exact target verification, leaving the target rollout distribution and GRPO objective unchanged. On five models (1.5B\u201314B) and three math datasets, SpecRoll yields 1.26\u20132.15\u00d7 generation speedups and 1.21\u20132.04\u00d7 end-to-end speedups over vanilla GRPO, outperforming FastGRPO across 15 settings with an average end-to-end gain of 1.18\u00d7, and ablations show complementary benefits of the fast and slow paths.",
+        "why_it_matters": "It offers a practical, distribution-preserving way to speed RL rollouts with verifier feedback, improving throughput over FastGRPO without altering GRPO objectives\u2014relevant for secure, efficient training of reasoning LLMs.",
         "score": 4.0,
         "reason": "SpecRoll focuses on speculative decoding within RL rollouts to speed generation\u2014relevant for efficient agentic RLHF/rollouts but not directly on LLM security or time-series foundations.",
         "slot": "relevance",
@@ -3770,8 +3770,8 @@
       {
         "title": "Into the ORBIT for Time Series: Training Regimes for Foundation Models",
         "url": "http://arxiv.org/abs/2608.13262v1",
-        "summary": null,
-        "why_it_matters": null,
+        "summary": "The paper introduces ORBIT, a training paradigm for TSFMs that explicitly controls pre-training distributions via Bootstrap Multi-Level Sampling and Omni-Range Incremental Training. It trains Falcon-2.0, a univariate encoder-only Transformer with missingness-aware triple-channel patch tokenization and parallel patch prediction, under this regime. The authors also propose Rank-Guided Cross-Depth Alignment to align shallow and deep representations, and report strong zero-shot forecasting on GIFT-Eval and fev-bench across diverse domains and frequencies.",
+        "why_it_matters": "It provides a principled, controllable pretraining regime and lightweight representation alignment that could transfer to secure LLM pretraining curricula and to robust TSFM deployment across heterogeneous, imbalanced time-series corpora.",
         "score": 5.0,
         "reason": "Evaluation metric for synthetic limit-order-book time series is relevant for TSFM evaluation and assessing generative-model fidelity, with potential security implications for market-simulation attacks.",
         "slot": "relevance",
@@ -3784,8 +3784,8 @@
       {
         "title": "PolicyKG: An Agentic LLM Pipeline for Translating Institutional Policies into SHACL Knowledge Graphs",
         "url": "http://arxiv.org/abs/2608.09028v1",
-        "summary": null,
-        "why_it_matters": null,
+        "summary": "PolicyKG is an agentic LLM pipeline that converts policy PDFs into SHACL via deontic sentence classification, FOL lifting, and a LangGraph workflow with validators, centered on a YAML Corpus Adapter that grounds predicates to a target ontology. On the AIT Policies and Procedures corpus, it reports 86.9% deontic classification accuracy (\u03ba=.709), SHACL F1=.866 on 69 shapes, 79.2% FOL coverage with the remainder using NL-to-SHACL fallback, and an audit placing the upper 95% bound on higher-order logic usage at 0.67%. Domain retargeting via registry swap improves GDPR property alignment (1/15\u219211/15; Fisher p<.001; h=1.53), but macro F1 drops to .370 on LexDeMod due to vocabulary mismatch, while outputs are hash-identical across runs.",
+        "why_it_matters": "Demonstrates a practical, auditable NL\u2192FOL\u2192SHACL pipeline with ontology-grounding and run determinism, highlighting domain shift/vocab grounding issues relevant to secure LLM agents and robust constraint generation.",
         "score": 4.0,
         "reason": "Practical pipeline for translating policies into formal constraints using LLMs and validators touches agentic system tooling and automated compliance verification, useful for governance/evaluation of agent behavior.",
         "slot": "relevance",
@@ -3798,8 +3798,8 @@
       {
         "title": "Cross-Corpus Evaluation of Generalizable Vulnerability Detection in IoT Firmware",
         "url": "http://arxiv.org/abs/2608.11492v1",
-        "summary": null,
-        "why_it_matters": null,
+        "summary": "The paper introduces IoTVulBench, a human-verified, contamination-screened benchmark for cross-corpus IoT firmware vulnerability detection, and evaluates five model architectures, two tuning methods, and three curriculum strategies with ensemble, distillation, and robustness analyses. Models trained on IoTVulBench outperform matched single-source datasets (MCC 0.58 vs. 0.44 for PrimeVul and 0.39 for D2A), with staged curriculum learning raising MCC to 0.69 and a diversity-optimized ensemble reaching 0.73, surpassing a static analyzer (0.31) and PrimeVul by large margins while maintaining 86% performance under identifier renaming and showing strong calibration and largely faithful explanations. At a 0.5% FPR, the model missed 21% of vulnerabilities versus 71% for the strongest comparator, indicating domain-matched data and curriculum design\u2014not model scale alone\u2014drive generalization in firmware vulnerability detection.",
+        "why_it_matters": "Provides a contamination-screened, human-verified benchmark and concrete training/curriculum/ensemble recipes that substantially improve cross-corpus generalization\u2014useful for LLM security evaluation and for designing data- and curriculum-centric pipelines beyond scaling.",
         "score": 4.0,
         "reason": "IoT firmware vulnerability detection benchmark is relevant to broader adversarial robustness and benchmark validity but outside core LLM/security or time\u2011series focus.",
         "slot": "relevance",
@@ -3813,8 +3813,8 @@
       {
         "title": "ActBench: Self-Evolving Benchmark of Behavioral Safety in Cowork Agents",
         "url": "http://arxiv.org/abs/2608.09476v1",
-        "summary": null,
-        "why_it_matters": null,
+        "summary": "The paper defines behavioral safety for cowork agents and presents ActBench, a self-evolving benchmark that evaluates behavior risk from execution trajectories via paired benign/adversarial cases with task-reachable payloads. It introduces a reward-guided beam search with reflection to optimize attack effectiveness and task utility, and a dual evidence verification mechanism using logs and LLM-based trajectory evidence to assess safety and utility. Evaluating 15 LLMs and 6 cowork agents over 24,000 trajectories, they report attack success rates varying 10.1%\u201394.4% across models under a fixed harness and 73.7%\u201394.4% across agents under a fixed base model, with higher variation across models and high attack success across harnesses.",
+        "why_it_matters": "Gives a trajectory-centric, evolving benchmark and attack/verification tools to stress-test and compare LLM-based agents\u2019 behavioral safety across APIs and execution spaces\u2014useful for red-teaming, agent tuning, and safety eval pipelines.",
         "score": 4.0,
         "reason": "Diffusion model merging backdoor mitigation is solid adversarial-ML work but targets generative image models rather than LLMs or time-series models\u2014peripheral relevance for methodology.",
         "slot": "relevance",
@@ -3856,8 +3856,8 @@
       {
         "title": "PolicyKG: An Agentic LLM Pipeline for Translating Institutional Policies into SHACL Knowledge Graphs",
         "url": "http://arxiv.org/abs/2608.09028v1",
-        "summary": null,
-        "why_it_matters": null,
+        "summary": "PolicyKG is an agentic LLM pipeline that converts policy PDFs into SHACL via deontic sentence classification, FOL lifting, and a LangGraph workflow with validators, centered on a YAML Corpus Adapter that grounds predicates to a target ontology. On the AIT Policies and Procedures corpus, it reports 86.9% deontic classification accuracy (\u03ba=.709), SHACL F1=.866 on 69 shapes, 79.2% FOL coverage with the remainder using NL-to-SHACL fallback, and an audit placing the upper 95% bound on higher-order logic usage at 0.67%. Domain retargeting via registry swap improves GDPR property alignment (1/15\u219211/15; Fisher p<.001; h=1.53), but macro F1 drops to .370 on LexDeMod due to vocabulary mismatch, while outputs are hash-identical across runs.",
+        "why_it_matters": "Demonstrates a practical, auditable NL\u2192FOL\u2192SHACL pipeline with ontology-grounding and run determinism, highlighting domain shift/vocab grounding issues relevant to secure LLM agents and robust constraint generation.",
         "score": 4.0,
         "reason": "Practical pipeline for translating policies into formal constraints using LLMs and validators touches agentic system tooling and automated compliance verification, useful for governance/evaluation of agent behavior.",
         "slot": "relevance",
@@ -3870,8 +3870,8 @@
       {
         "title": "Uniform Herding: Exemplar Replay with Representation Refresh",
         "url": "http://arxiv.org/abs/2608.13061v1",
-        "summary": null,
-        "why_it_matters": null,
+        "summary": "The paper proposes Uniform Herding, which allocates a bounded active exemplar set across observed classes and refreshes exemplars via a bounded candidate pool under the current representation to better preserve earlier classes during replay. On CIFAR-100 with 10 class-incremental tasks, a ResNet-18 backbone, active budget M=2,000, retrieval budget b=64, and three seeds, it reports 44.00\u00b10.51% final average accuracy and 17.22\u00b10.43% forgetting, versus iCaRL\u2019s 42.33\u00b11.20% and 24.87\u00b11.11%. Within this protocol, replacing NME or herding reduced final accuracy, removing distillation increased forgetting, retrieval budget mattered less than active budget, and the iCaRL comparison is end-to-end without isolating refresh effects, with conclusions limited to this tested setup.",
+        "why_it_matters": "Replay exemplar selection/refresh trade-offs and budget sensitivity are central to continual learning pipelines relevant to secure, low-forgetting LLM adaptation and time-series model updates under constrained memory.",
         "score": 4.0,
         "reason": "Theoretical unification of generative models via path integrals is mathematically interesting and could inform sampling/robustness, but it's distant from the user's priority areas (LLM security and TSFM).",
         "slot": "relevance",
