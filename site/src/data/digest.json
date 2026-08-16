@@ -1,12 +1,12 @@
 {
-  "date": "2026-08-15",
+  "date": "2026-08-16",
   "brief": {
-    "run_date": "2026-08-15",
+    "run_date": "2026-08-16",
     "provider": "openrouter",
     "model": "openai/gpt-5",
-    "content_md": "Coffee brief for today: security-first agentics with a side of time series\n\nBASIS is the cleanest practical advance: a prefill-attention probe that predicts when an injection is present and, crucially, whether it will actually breach robust instructions. Two sparse linear probes (existence and breach) run in a cascaded gate with no extra LLM calls. On six open models and multiple tasks they keep near-perfect injection detection while slashing over-refusal on \u201csafe-looking\u201d attack samples\u2014especially under robust templates. The shift here is from blanket refuse to per-sample breach prediction using attention competition ratios, aligning with selective prediction and giving you a drop\u2011in tool to reduce false positives without opening the door to real compromises.\n\nIf you want to pressure-test that kind of defense, PIMiner is the sharp new stick. It learns a strategy library for prompt injection by training over sequences of (dataset, target) pairs and then transfers to unseen models with about ten queries per sample. It posts high attack success on IPIArena and AgentDojo, beating RL-based red-teamers that don\u2019t generalize. Pair this with BASIS: PIMiner supplies diverse, transferable attack trajectories; BASIS provides low-latency breach-aware gating to study where robust instructions truly hold.\n\nZooming out, the Horizon Gap survey is the map you want handy for long-horizon agents. It distinguishes long-horizon from long-context and long-term memory, then shows why outcome-only signals deteriorate as horizons stretch: you need denser, step-level signals, better credit assignment, and trajectory diagnostics. Their taxonomy across planning, memory, execution, training, and evaluation intersects directly with security: long horizons amplify small safety leaks, and you must separate model competence from harness competence when attributing failure. Keep this in mind as you interpret any \u201cagent safety\u201d numbers below.\n\nSpeaking of harnesses, HarnessSafe gives you a carrier-aware way to evaluate delayed risks that hop across memory, tool caches, and skills. Instead of measuring a flat attack success rate, it traces persistent-risk lifecycles from entry to cross-carrier propagation to eventual violation, scoring where the attack is halted. Results show containment is fiercely carrier\u2011 and configuration\u2011specific; model and harness both shape outcomes, and ASR alone misses where the pipeline is brittle. This is the right lens for debugging contamination that surfaces minutes or sessions later.\n\nOn the supply-chain front, ElasticBack is a pointed reminder that \u201cskills\u201d are a new backdoor surface. It pairs a malicious rule in a skill file with a benign\u2011looking trigger in user queries, activating only on the conjunction\u2014no weight edits. High ASR with near\u2011zero FPR, preserved clean accuracy, and cross\u2011model transfer, evading common deployment-time defenses. If your agents load third\u2011party skills, you now have to audit rule\u2013trigger couplings, not just payload strings. Complement this with LoRAScan if you depend on adapters: monitoring a small subset of LoRA down-projection sites for activation spikes catches backdoor triggers at inference without merging adapters or retraining, with ~98% malicious rejection in their tests. Together they sketch a pragmatic defense stack for skills and adapters.\n\nA third attacker angle worth folding into your evals: SAVOR\u2019s one-shot indirect prompt injection. It distills attack strategies offline via outcome-conditioned reflection and arrives at test time with a single payload\u2014no iterative adaptation. It beats prior IPI attacks across agents and transfers across defenses. Why you care: defenses that rely on detecting adaptation loops or multi-turn probing won\u2019t see this coming; your guardrails need to work under single-shot constraints.\n\nFor trajectory reliability and risk estimation, two pieces complement each other. Beyond Single-Turn Confidence reevaluates uncertainty quantification for multi-turn agents: token-probability scores hinge on the aggregation rule you choose, reflexive self-assessments are strong cheap baselines, and black-box trajectory-equivalence/self-consistency often wins when you can spend compute. Meanwhile ProbGuard reframes safety as calibrated risk over the early output distribution, letting you stop unsafe generations in the first ten decoding steps while achieving far better calibration than standard guards. Read together, they argue for distribution-aware, trajectory-level risk meters rather than end-of-turn classifiers.\n\nFinally, outside your usual lane but surprisingly actionable for governance of self-adapting systems, the Telemetry and Concealment paper proposes a dual-regime logging architecture: a Merkle-style chain for discrete weight snapshots, an Ito-process analogue for continuous updates, and KL-based stopping-time logs, then catalogs six model-hiding attacks with matching countermeasures. The takeaway is sober: continuous telemetry narrows\u2014but cannot replace\u2014periodic invasive audits. If your roadmap includes on-line adaptation (for LLMs or time-series models), this gives you a concrete, architecture-agnostic telemetry design and a checklist of concealment tactics to red-team against.\n\nIf you have time for one more cross-cutting read, Persistent Semantic Entities shows how name binding drives long-lived contamination across tool-augmented pipelines. Preference/instruction contamination persists and compounds across stages, while naive keyword detectors overfire. Context-isolated self-verification cuts contamination by a median 36.5%. It\u2019s an uncomfortable but useful quantification of why \u201charmless\u201d artifacts keep resurfacing in multi-stage agents and why lifecycle-aware defenses like HarnessSafe\u2019s traces matter.\n\nThat\u2019s the meat today: breach-aware gating (BASIS), transferable/one-shot IPI attack tools (PIMiner, SAVOR), carrier- and lifecycle-aware evals (Horizon Gap, HarnessSafe, PSEs), practical supply-chain defenses (LoRAScan) and threats (ElasticBack), and calibrated, trajectory-level risk controls (ProbGuard, trajectory UQ), with a governance-side telemetry architecture for self-updating models.",
-    "cost_usd": 0.040137,
-    "created_at": "2026-08-15T05:21:17.551635+00:00"
+    "content_md": "Good morning. The prompt-injection/agentic beat is unusually rich today, with a few pieces that also touch long-horizon evaluation and TSFM-style sequence thinking.\n\nFirst, a clean swing at over-refusal in prompt-injection defenses: BASIS argues most aligned models already shrug off many injections, so binary refuse-on-detection wastes capability. They read the prefill attention and train two sparse linear probes\u2014a quick \u201cexistence\u201d gate and a \u201cbreach\u201d probe\u2014to decide, per sample, whether an injection is present and whether it will actually breach instructions. It\u2019s all done in the prefill without extra generations, so you get near-perfect detection while sharply cutting false refusals on benign-but-attack-shaped inputs. The upshot for agent harnesses: use robust instruction templates, add BASIS as a no-latency gate, and you reclaim a chunk of lost utility without opening the door.\n\nAttackers aren\u2019t standing still, though. Two agentic red-teamers are worth your coffee. PIMiner learns a cross-model strategy library for prompt injection and transfers it to unseen targets with only ~10 queries per sample; it posts strong ASR on IPIArena and AgentDojo and embarrasses several RL-based red teamers that don\u2019t generalize. Complementing that, SAVOR moves the adaptation offline: it distills strategy abstractions from (success, failure) traces and then hits new targets one-shot at test time\u2014no iterative probing\u2014still beating prior attacks by sizable margins, and transferring across defenses. Together they suggest you should evaluate under both realistic one-shot IPIs and low-budget transfer attackers; any defense that requires many interactions to adapt is living on borrowed time.\n\nOn the defensive evaluation side, HarnessSafe finally treats \u201cpersistent carriers\u201d as first-class citizens in agent harnesses\u2014memories, tools, skill stores, etc.\u2014and scores how risks propagate over multi-stage lifecycles rather than with a flat ASR. The finding you\u2019ll care about: containment is carrier-specific and highly configuration-dependent, and simple success-rate summaries miss where attacks stall or sail through. If you maintain multi-session or tool-rich agents, a trace-based lifecycle readout like this is the right unit of analysis.\n\nZooming out, a large, careful survey on long-horizon agents\u2014The Horizon Gap\u2014disentangles long-horizon vs long-context vs long-term memory and catalogues where plans fail when you stretch into multi-hour, multi-step regimes. The recurring theme: outcome-only signals go to mush as horizons grow, so dense, process-level signals and credit assignment matter. For security this is practical advice: if you\u2019re auditing or training long-running agents, you need trajectory diagnostics and process rewards that separate harness capability from model capability, or you\u2019ll overfit to the easy parts and miss the slow burns.\n\nSupply chain risks in agent skills get sharper with ElasticBack, a conditional backdoor that lives entirely in a single \u201cskill\u201d file: a benign-looking query trigger plus a semantically anchored rule inside the skill, activating only when both align. No weight changes, high ASR, near-zero FPR, and it evades common deployment defenses. Pair that with SkillsMetric\u2019s static-analysis map of what you can and cannot catch in skill repos (great on exfil and stego, blind on host destruction via common shells and weak on prompt injection) and you have a concrete to-do: strengthen ingestion pipelines with semantic review and runtime checks; static analysis won\u2019t save you alone.\n\nTwo pieces refine how we measure and gate risk at inference. ProbGuard reframes guardrails as calibrated risk over the model\u2019s early output distribution; by Monte-Carloing prefixes and calibrating, it caps jailbreak success to ~1% after ~10 tokens with far better Brier/ECE than baselines. This plays nicely with trajectory-aware agents: stop early when the risk spikes, rather than post hoc refusing. In a similar \u201cmeasure what matters\u201d vein, a sobering reproducibility audit\u2014From Runnable to Verifiable\u2014shows how fragile many LLM/agent security artifacts are: low end-to-end run rates, mislabeled CVEs, and flaky oracles. They propose a simple, pre-registered ladder (R0/R1 repairs, patched counterfactuals, evidence grades) you can lift straight into your evals; if you rely on embedded oracles without clean counterfactuals, your reported safety could be wishful thinking.\n\nFinally, one outside your usual lane but worth it if you think like a sequence-modeler: Align-RAG for time-series forecasts shows that a training-free, closed-form amplitude/phase alignment of retrieved windows fed into a frozen TSFM beats a trained retrieval adapter and lifts several frozen backbones. The interesting crossover for LLM agents is the message, not the domain: frozen backbones can exploit well-aligned demonstrations without learned fusion, so for retrieval-augmented reasoning or tool use, simple alignment transforms might deliver most of the gain without another training loop\u2014and without expanding your attack surface.\n\nIf you only pick one to action this week: wire BASIS-style prefill probes ahead of your agent harness, and re-run your red-team with PIMiner\u2019s low-budget transfer and SAVOR\u2019s one-shot attacks under HarnessSafe\u2019s lifecycle traces. Then add ProbGuard\u2019s early-risk stop to your decoding stack. The rest will read as familiar\u2014but with these, your over-refusal budget, eval fidelity, and attacker model all get markedly closer to reality.",
+    "cost_usd": 0.04058,
+    "created_at": "2026-08-16T05:23:18.274794+00:00"
   },
   "stories": [
     {
@@ -35,20 +35,6 @@
         "llm-security",
         "agents",
         "evaluation"
-      ]
-    },
-    {
-      "title": "Personalized Federated Sparse Adaptation of Time-Series Foundation Models",
-      "url": "http://arxiv.org/abs/2608.04695v1",
-      "summary": "The paper proposes a personalized federated sparse adaptation framework for TSFMs in building energy forecasting, using a heterogeneous temporal MoE adapter placed after the pretrained representation and a sequence-level router that assigns each 168-hour window to top-k experts specialized for distinct temporal structures. It evaluates global FL, local training, and personalized FL variants with globally shared vs client-private expert banks across 50 buildings and three TSFM backbones. Results show personalization consistently outperforms Global FL-MoE and Local MoE, the best sparse-adaptation strategy depends on backbone and metric, and routing reveals client-level expert specialization, expert concentration, and near-uniform routing across backbones, implying adaptation should be client- and backbone-aware.",
-      "why_it_matters": "Combines federated personalization with sparse MoE routing for TSFMs under non-IID meter data, offering actionable design signals (client-/backbone-aware adapters) relevant to secure on-device adaptation and privacy-preserving deployment.",
-      "score": 7.0,
-      "reason": "Federated personalization for TS foundation models directly matches the reader's primary interest in TSFMs and on-device/private data adaptation; MoE adapter and sparse adaptation are relevant to architecture and efficient adaptation.",
-      "slot": "relevance",
-      "sections": [
-        "tsfm",
-        "efficiency",
-        "has-code"
       ]
     },
     {
@@ -91,9 +77,7 @@
         "llm-security",
         "evaluation"
       ]
-    }
-  ],
-  "stories_overflow": [
+    },
     {
       "title": "Toward Metacognitive One-Shot Indirect Prompt Injection: Strategy Abstraction Via Outcome-Conditioned Reflection",
       "url": "http://arxiv.org/abs/2608.08795v1",
@@ -108,7 +92,9 @@
         "adversarial-ml",
         "evaluation"
       ]
-    },
+    }
+  ],
+  "stories_overflow": [
     {
       "title": "From Runnable to Verifiable: An Independent Reproducibility Study of LLM/Agent-Driven Vulnerability Validation Artifacts",
       "url": "http://arxiv.org/abs/2608.09567v1",
@@ -421,6 +407,20 @@
         "llm-security",
         "adversarial-ml",
         "evaluation"
+      ]
+    },
+    {
+      "title": "Personalized Federated Sparse Adaptation of Time-Series Foundation Models",
+      "url": "http://arxiv.org/abs/2608.04695v1",
+      "summary": "The paper proposes a personalized federated sparse adaptation framework for TSFMs in building energy forecasting, using a heterogeneous temporal MoE adapter placed after the pretrained representation and a sequence-level router that assigns each 168-hour window to top-k experts specialized for distinct temporal structures. It evaluates global FL, local training, and personalized FL variants with globally shared vs client-private expert banks across 50 buildings and three TSFM backbones. Results show personalization consistently outperforms Global FL-MoE and Local MoE, the best sparse-adaptation strategy depends on backbone and metric, and routing reveals client-level expert specialization, expert concentration, and near-uniform routing across backbones, implying adaptation should be client- and backbone-aware.",
+      "why_it_matters": "Combines federated personalization with sparse MoE routing for TSFMs under non-IID meter data, offering actionable design signals (client-/backbone-aware adapters) relevant to secure on-device adaptation and privacy-preserving deployment.",
+      "score": 7.0,
+      "reason": "Federated personalization for TS foundation models directly matches the reader's primary interest in TSFMs and on-device/private data adaptation; MoE adapter and sparse adaptation are relevant to architecture and efficient adaptation.",
+      "slot": "relevance",
+      "sections": [
+        "tsfm",
+        "efficiency",
+        "has-code"
       ]
     },
     {
@@ -1190,17 +1190,17 @@
           ]
         },
         {
-          "title": "ProbGuard: Calibrated Safety Risk Estimation from LLM Output Distributions",
-          "url": "http://arxiv.org/abs/2608.10621v1",
-          "summary": "ProbGuard reframes LLM safety assessment as probabilistic risk estimation over the model\u2019s early output distribution rather than deterministic classification on completed token sequences. It estimates the probability of unsafe continuation via Monte Carlo over generated prefix distributions and calibrates this risk through post-training, enabling early stopping of unsafe generations. Empirically, it achieves the best calibration across nine model\u2013dataset settings (average Brier and ECE reduced by 79.6% and 71.9% vs. the best baseline) and caps jailbreak attack success to \u22641% after only the first ten decoding steps.",
-          "why_it_matters": "It operationalizes distribution-aware, early-stage safety control with strong calibration\u2014useful for red-teaming defenses, risk-sensitive deployment, and aligning with probabilistic guardrail research and time-series-style forecasting over generation trajectories.",
+          "title": "AI4AI at Test-Time: Strong-to-Weak Capability Transfer via Harnesses",
+          "url": "http://arxiv.org/abs/2608.12307v1",
+          "summary": "This paper studies test-time strong-to-weak scaffolding, where a stronger builder model designs inference-time harnesses to boost a weaker target model without parameter updates. On four ToM benchmarks, using 5% validation data for multi-round harness refinement, this approach nearly doubles target performance from 0.49 to 0.91, with gains mainly from deterministic code offloading, benchmark-specific routing, and strict answer-format enforcement rather than more or broader LM reasoning. Builder effort monotonically improves harness quality, platform effects are modest relative to builder capability, and weaker targets benefit most, positioning inference-time harness design as a complement to training-time distillation.",
+          "why_it_matters": "Shows large test-time gains via scaffolded control logic and routing, informing LLM security (robustness, format control) and offering a template for capability transfer relevant to modular inference and time-series foundation model deployment without retraining.",
           "score": 6.0,
-          "reason": "Proposes a novel metric (feature nonlocality) to assess abstraction level of learned features from sparse autoencoders; useful for mechanistic interpretability and evaluating claims about high-level features relevant to jailbreak/mechanistic work.",
+          "reason": "Test\u2011time harnessing of stronger models to help weaker agents is relevant to agent scaffolding and efficient red\u2011teaming/assistive inference but not directly security or time\u2011series.",
           "slot": "relevance",
           "sections": [
+            "agents",
             "alignment",
-            "adversarial-ml",
-            "evaluation"
+            "efficiency"
           ]
         }
       ],
@@ -1222,6 +1222,20 @@
             "agents",
             "llm-security",
             "adversarial-ml"
+          ]
+        },
+        {
+          "title": "When Experience Becomes Instruction: Trajectory Poisoning in Self-Evolving Agent Skill Systems",
+          "url": "http://arxiv.org/abs/2608.05563v1",
+          "summary": "The paper introduces PoisonedEvolution, a trajectory-poisoning attack on self-evolving skill (SES) systems that distill agent trajectories into persistent skills, where an attacker with skill-level black-box access contributes bounded evidence to influence skill promotion. It formalizes artifact poisoning as requiring Inclusion, Evolution Attribution, and Realization, identifying Attribution\u2014making target behaviors appear causally useful, recurrent, and generalizable\u2014as the key bottleneck, and demonstrates high success embedding target behaviors across six LLM evolvers in SkillClaw (91.0% SER) and transfer to Trace2Skill (61.5% SER) at 10% attacker support. Controlled studies show three consistent attacker records in a 30-record batch suffice while one is much weaker, and ablations highlight recurring support, causal framing, and domain-aligned encoding as main success factors, framing evidence promotion as a critical security boundary for self-evolving agents.",
+          "why_it_matters": "It pinpoints the promotion/attribution step in skill evolution as an attack surface with quantified vulnerability and transferable effects, informing defenses for agentic LLMs and data-driven skill distillation pipelines.",
+          "score": 8.0,
+          "reason": "Robust context-aware segmentation for malicious instructions (IPI) targets detection of embedded prompt injections tailored to a query\u2014highly relevant to defending agents and evaluating instruction-level attacks.",
+          "slot": "relevance",
+          "sections": [
+            "llm-security",
+            "evaluation",
+            "agents"
           ]
         },
         {
@@ -1251,20 +1265,6 @@
             "longform",
             "evaluation"
           ]
-        },
-        {
-          "title": "HarnessSafe: Evaluating Safety Across Persistent Carriers in Agent Harnesses",
-          "url": "http://arxiv.org/abs/2608.06984v1",
-          "summary": "The paper introduces HarnessSafe, a benchmark of 328 executable cases spanning seven persistent-carrier families to assess delayed safety risks in agent harnesses that persist state across tasks and sessions. Each case is defined as a Persistent-Risk Lifecycle that traces attacker influence from entry through cross-carrier persistence to a benign trigger and an observable violation, and a multi-stage, trace-based evaluation measures how far each attack progresses and where it is stopped. Experiments indicate containment is carrier-specific and depends strongly on the harness-model configuration, with both harness and model shaping outcomes and attack success rates failing to capture lifecycle progression patterns.",
-          "why_it_matters": "It offers a carrier-aware, trace-based methodology and dataset to dissect how safety risks propagate across memory/tools/skills in agentic systems\u2014complementing coarse success-rate metrics and informing defense design in LLM agents and persistent pipelines.",
-          "score": 9.0,
-          "reason": "Benchmarks delayed safety risks from persistent carriers in agent harnesses; directly targets attack surfaces (memory, tools, skills), evaluation methodology, and end-to-end exploit propagation \u2014 highly relevant to LLM security and agentic threat models.",
-          "slot": "relevance",
-          "sections": [
-            "llm-security",
-            "evaluation",
-            "agents"
-          ]
         }
       ],
       "unavailable_reason": null
@@ -1284,6 +1284,20 @@
           "sections": [
             "tsfm",
             "evaluation",
+            "efficiency"
+          ]
+        },
+        {
+          "title": "Learning with Bilevel-Minimax Optimization for Efficient and Reliable Transfer Attacks",
+          "url": "http://arxiv.org/abs/2608.11815v1",
+          "summary": "The paper reframes transfer-based adversarial attacks as a bilevel-minimax problem, modeling the coupling among initialization, surrogate adaptation, and gradient-based perturbation optimization. It introduces BMAT, which uses a Soft Weight Modulator and an Implicit Gradient Approximator to enable ternary coupling and improve cross-architecture generalization, with accompanying theoretical analysis of the optimization dynamics. Experiments on classification and segmentation show BMAT outperforms 10+ baselines across 30+ victim models and can halve mIoU, with code released at the provided repository.",
+          "why_it_matters": "Offers a principled bilevel-minimax view and practical solver that materially improves black-box transferability, relevant to robust LLM jailbreak defenses and cross-architecture time-series model attacks/defenses.",
+          "score": 6.0,
+          "reason": "Analyzes geometry of rollout RL for LLMs and proposes diagnostics/constraints \u2014 relevant to post\u2011training stability of LLM agents and rollout-based fine\u2011tuning used in safety work.",
+          "slot": "relevance",
+          "sections": [
+            "agents",
+            "alignment",
             "efficiency"
           ]
         },
@@ -1313,20 +1327,6 @@
             "llm-security",
             "agents",
             "efficiency"
-          ]
-        },
-        {
-          "title": "Personalized Federated Sparse Adaptation of Time-Series Foundation Models",
-          "url": "http://arxiv.org/abs/2608.04695v1",
-          "summary": "The paper proposes a personalized federated sparse adaptation framework for TSFMs in building energy forecasting, using a heterogeneous temporal MoE adapter placed after the pretrained representation and a sequence-level router that assigns each 168-hour window to top-k experts specialized for distinct temporal structures. It evaluates global FL, local training, and personalized FL variants with globally shared vs client-private expert banks across 50 buildings and three TSFM backbones. Results show personalization consistently outperforms Global FL-MoE and Local MoE, the best sparse-adaptation strategy depends on backbone and metric, and routing reveals client-level expert specialization, expert concentration, and near-uniform routing across backbones, implying adaptation should be client- and backbone-aware.",
-          "why_it_matters": "Combines federated personalization with sparse MoE routing for TSFMs under non-IID meter data, offering actionable design signals (client-/backbone-aware adapters) relevant to secure on-device adaptation and privacy-preserving deployment.",
-          "score": 7.0,
-          "reason": "Federated personalization for TS foundation models directly matches the reader's primary interest in TSFMs and on-device/private data adaptation; MoE adapter and sparse adaptation are relevant to architecture and efficient adaptation.",
-          "slot": "relevance",
-          "sections": [
-            "tsfm",
-            "efficiency",
-            "has-code"
           ]
         }
       ],
@@ -1399,18 +1399,16 @@
       "description": "New model weights or major model announcements from labs.",
       "items": [
         {
-          "title": "LoRAScan: Detecting Backdoor Prompts in Low-Rank Adapters for Large Language Models via Down-Projection Activation Spikes",
-          "url": "http://arxiv.org/abs/2608.06795v1",
-          "summary": "The paper introduces LoRAScan, an adapter-aware defense that detects and rejects trigger-bearing inputs for potentially backdoored LoRA adapters at inference time without modifying adapter parameters. It exploits the observation that about 5% of LoRA insertion sites exhibit stable activations on clean inputs but show concentrated spikes in down-projection activations when a trigger is present; these sites are identified pre-deployment and monitored online. On standard LLM backdoor benchmarks, LoRAScan rejects approximately 98.49 of malicious inputs with a small error rate on clean inputs, outperforming existing defenses across diverse settings.",
-          "why_it_matters": "It offers a practical, deployment-compatible defense for LoRA-based supply-chain backdoors by leveraging activation signatures rather than adapter merging or retraining, aligning with current interests in robust LLM fine-tuning security.",
-          "score": 8.0,
-          "reason": "LoRAScan targets backdoored LoRA adapters\u2014a direct supply-chain threat to LLM security (adapter-level backdoors) and practical detection method relevant to applied defenses.",
+          "title": "ActBench: Self-Evolving Benchmark of Behavioral Safety in Cowork Agents",
+          "url": "http://arxiv.org/abs/2608.09476v1",
+          "summary": "The paper defines behavioral safety for cowork agents and presents ActBench, a self-evolving benchmark that evaluates behavior risk from execution trajectories via paired benign/adversarial cases with task-reachable payloads. It introduces a reward-guided beam search with reflection to optimize attack effectiveness and task utility, and a dual evidence verification mechanism using logs and LLM-based trajectory evidence to assess safety and utility. Evaluating 15 LLMs and 6 cowork agents over 24,000 trajectories, they report attack success rates varying 10.1%\u201394.4% across models under a fixed harness and 73.7%\u201394.4% across agents under a fixed base model, with higher variation across models and high attack success across harnesses.",
+          "why_it_matters": "Gives a trajectory-centric, evolving benchmark and attack/verification tools to stress-test and compare LLM-based agents\u2019 behavioral safety across APIs and execution spaces\u2014useful for red-teaming, agent tuning, and safety eval pipelines.",
+          "score": 4.0,
+          "reason": "Diffusion model merging backdoor mitigation is solid adversarial-ML work but targets generative image models rather than LLMs or time-series models\u2014peripheral relevance for methodology.",
           "slot": "relevance",
           "sections": [
-            "llm-security",
             "adversarial-ml",
-            "model-releases",
-            "has-code"
+            "model-releases"
           ]
         },
         {
@@ -1442,17 +1440,18 @@
           ]
         },
         {
-          "title": "Measure, Don't Optimize: Forecasting Recovery in LLM Unlearning",
-          "url": "http://arxiv.org/abs/2608.11408v1",
-          "summary": "The paper introduces J-Access, an inference-time audit that projects intermediate representations into vocabulary space to measure how often target concepts remain accessible along the output pathway, hypothesizing that residual accessibility predicts recovery susceptibility. Auditing 398 public unlearned models across eight methods, they find most retain accessibility above a retain-only gold level, pre-attack accessibility predicts recovery speed and extent at the model level (but not per-fact), and directly minimizing J-Access causes the model to hide knowledge from the audit while increasing post-attack recovery. They conclude J-Access is useful as a model-level diagnostic for residual susceptibility and caution against turning internal audits into optimization targets without validation.",
-          "why_it_matters": "Offers an actionable, model-level risk signal for unlearning robustness and a clear warning about Goodharting internal audits\u2014relevant for designing secure unlearning and audit pipelines in LLMs.",
-          "score": 7.0,
-          "reason": "Investigates latent recovery after LLM unlearning with an audit (J\u2011Access) \u2014 important for data\u2011removal/extraction risk monitoring and evaluation methodology.",
+          "title": "LoRAScan: Detecting Backdoor Prompts in Low-Rank Adapters for Large Language Models via Down-Projection Activation Spikes",
+          "url": "http://arxiv.org/abs/2608.06795v1",
+          "summary": "The paper introduces LoRAScan, an adapter-aware defense that detects and rejects trigger-bearing inputs for potentially backdoored LoRA adapters at inference time without modifying adapter parameters. It exploits the observation that about 5% of LoRA insertion sites exhibit stable activations on clean inputs but show concentrated spikes in down-projection activations when a trigger is present; these sites are identified pre-deployment and monitored online. On standard LLM backdoor benchmarks, LoRAScan rejects approximately 98.49 of malicious inputs with a small error rate on clean inputs, outperforming existing defenses across diverse settings.",
+          "why_it_matters": "It offers a practical, deployment-compatible defense for LoRA-based supply-chain backdoors by leveraging activation signatures rather than adapter merging or retraining, aligning with current interests in robust LLM fine-tuning security.",
+          "score": 8.0,
+          "reason": "LoRAScan targets backdoored LoRA adapters\u2014a direct supply-chain threat to LLM security (adapter-level backdoors) and practical detection method relevant to applied defenses.",
           "slot": "relevance",
           "sections": [
             "llm-security",
-            "evaluation",
-            "model-releases"
+            "adversarial-ml",
+            "model-releases",
+            "has-code"
           ]
         }
       ],
@@ -1556,16 +1555,16 @@
           ]
         },
         {
-          "title": "Capability-Routed Guard: Defending Large Reasoning Models Against Reasoning-Centric Jailbreaks",
-          "url": "http://arxiv.org/abs/2608.07892v1",
-          "summary": "The paper introduces Capability-Routed Guard (CRG), a model-agnostic, inference-time guardrail for closed-source LRMs that reframes prompt defense as capability routing by constructing a trusted representation of authorized task, active context, safety evidence, and capability-transfer risk. CRG supports route-specific execution to block high-risk requests, constrain ambiguous ones, and forward low-risk requests via trusted active context, then applies TraceCheck for consistency with the authorized task and uses a restricted fallback to preserve utility for low-risk benign prompts. Experiments show CRG mitigates diverse reasoning-centric jailbreaks while preserving benign utility and avoiding over-refusals, with component analyses indicating complementary benefits and the importance of coordinated defenses for securing LRMs.",
-          "why_it_matters": "Directly targets reasoning-centric jailbreaks in LRMs with a practical, model-agnostic routing + verification pipeline that can be layered onto closed-source systems without weights or trace access.",
-          "score": 6.0,
-          "reason": "Discussion of verification, contamination, and LLM-as-judge reliability informs benchmark trust and evaluation methods, important context for honest security/benchmarking practices.",
+          "title": "PolicyKG: An Agentic LLM Pipeline for Translating Institutional Policies into SHACL Knowledge Graphs",
+          "url": "http://arxiv.org/abs/2608.09028v1",
+          "summary": "PolicyKG is an agentic LLM pipeline that converts policy PDFs into SHACL via deontic sentence classification, FOL lifting, and a LangGraph workflow with validators, centered on a YAML Corpus Adapter that grounds predicates to a target ontology. On the AIT Policies and Procedures corpus, it reports 86.9% deontic classification accuracy (\u03ba=.709), SHACL F1=.866 on 69 shapes, 79.2% FOL coverage with the remainder using NL-to-SHACL fallback, and an audit placing the upper 95% bound on higher-order logic usage at 0.67%. Domain retargeting via registry swap improves GDPR property alignment (1/15\u219211/15; Fisher p<.001; h=1.53), but macro F1 drops to .370 on LexDeMod due to vocabulary mismatch, while outputs are hash-identical across runs.",
+          "why_it_matters": "Demonstrates a practical, auditable NL\u2192FOL\u2192SHACL pipeline with ontology-grounding and run determinism, highlighting domain shift/vocab grounding issues relevant to secure LLM agents and robust constraint generation.",
+          "score": 4.0,
+          "reason": "Practical pipeline for translating policies into formal constraints using LLMs and validators touches agentic system tooling and automated compliance verification, useful for governance/evaluation of agent behavior.",
           "slot": "relevance",
           "sections": [
+            "agents",
             "evaluation",
-            "policy",
             "longform"
           ]
         }
@@ -2563,17 +2562,17 @@
     ],
     "alignment": [
       {
-        "title": "AI4AI at Test-Time: Strong-to-Weak Capability Transfer via Harnesses",
-        "url": "http://arxiv.org/abs/2608.12307v1",
-        "summary": "This paper studies test-time strong-to-weak scaffolding, where a stronger builder model designs inference-time harnesses to boost a weaker target model without parameter updates. On four ToM benchmarks, using 5% validation data for multi-round harness refinement, this approach nearly doubles target performance from 0.49 to 0.91, with gains mainly from deterministic code offloading, benchmark-specific routing, and strict answer-format enforcement rather than more or broader LM reasoning. Builder effort monotonically improves harness quality, platform effects are modest relative to builder capability, and weaker targets benefit most, positioning inference-time harness design as a complement to training-time distillation.",
-        "why_it_matters": "Shows large test-time gains via scaffolded control logic and routing, informing LLM security (robustness, format control) and offering a template for capability transfer relevant to modular inference and time-series foundation model deployment without retraining.",
+        "title": "ProbGuard: Calibrated Safety Risk Estimation from LLM Output Distributions",
+        "url": "http://arxiv.org/abs/2608.10621v1",
+        "summary": "ProbGuard reframes LLM safety assessment as probabilistic risk estimation over the model\u2019s early output distribution rather than deterministic classification on completed token sequences. It estimates the probability of unsafe continuation via Monte Carlo over generated prefix distributions and calibrates this risk through post-training, enabling early stopping of unsafe generations. Empirically, it achieves the best calibration across nine model\u2013dataset settings (average Brier and ECE reduced by 79.6% and 71.9% vs. the best baseline) and caps jailbreak attack success to \u22641% after only the first ten decoding steps.",
+        "why_it_matters": "It operationalizes distribution-aware, early-stage safety control with strong calibration\u2014useful for red-teaming defenses, risk-sensitive deployment, and aligning with probabilistic guardrail research and time-series-style forecasting over generation trajectories.",
         "score": 6.0,
-        "reason": "Test\u2011time harnessing of stronger models to help weaker agents is relevant to agent scaffolding and efficient red\u2011teaming/assistive inference but not directly security or time\u2011series.",
+        "reason": "Proposes a novel metric (feature nonlocality) to assess abstraction level of learned features from sparse autoencoders; useful for mechanistic interpretability and evaluating claims about high-level features relevant to jailbreak/mechanistic work.",
         "slot": "relevance",
         "sections": [
-          "agents",
           "alignment",
-          "efficiency"
+          "adversarial-ml",
+          "evaluation"
         ]
       },
       {
@@ -2592,6 +2591,20 @@
       }
     ],
     "agents": [
+      {
+        "title": "HarnessSafe: Evaluating Safety Across Persistent Carriers in Agent Harnesses",
+        "url": "http://arxiv.org/abs/2608.06984v1",
+        "summary": "The paper introduces HarnessSafe, a benchmark of 328 executable cases spanning seven persistent-carrier families to assess delayed safety risks in agent harnesses that persist state across tasks and sessions. Each case is defined as a Persistent-Risk Lifecycle that traces attacker influence from entry through cross-carrier persistence to a benign trigger and an observable violation, and a multi-stage, trace-based evaluation measures how far each attack progresses and where it is stopped. Experiments indicate containment is carrier-specific and depends strongly on the harness-model configuration, with both harness and model shaping outcomes and attack success rates failing to capture lifecycle progression patterns.",
+        "why_it_matters": "It offers a carrier-aware, trace-based methodology and dataset to dissect how safety risks propagate across memory/tools/skills in agentic systems\u2014complementing coarse success-rate metrics and informing defense design in LLM agents and persistent pipelines.",
+        "score": 9.0,
+        "reason": "Benchmarks delayed safety risks from persistent carriers in agent harnesses; directly targets attack surfaces (memory, tools, skills), evaluation methodology, and end-to-end exploit propagation \u2014 highly relevant to LLM security and agentic threat models.",
+        "slot": "relevance",
+        "sections": [
+          "llm-security",
+          "evaluation",
+          "agents"
+        ]
+      },
       {
         "title": "Toward Metacognitive One-Shot Indirect Prompt Injection: Strategy Abstraction Via Outcome-Conditioned Reflection",
         "url": "http://arxiv.org/abs/2608.08795v1",
@@ -2663,20 +2676,6 @@
           "agents",
           "llm-security",
           "evaluation"
-        ]
-      },
-      {
-        "title": "When Experience Becomes Instruction: Trajectory Poisoning in Self-Evolving Agent Skill Systems",
-        "url": "http://arxiv.org/abs/2608.05563v1",
-        "summary": "The paper introduces PoisonedEvolution, a trajectory-poisoning attack on self-evolving skill (SES) systems that distill agent trajectories into persistent skills, where an attacker with skill-level black-box access contributes bounded evidence to influence skill promotion. It formalizes artifact poisoning as requiring Inclusion, Evolution Attribution, and Realization, identifying Attribution\u2014making target behaviors appear causally useful, recurrent, and generalizable\u2014as the key bottleneck, and demonstrates high success embedding target behaviors across six LLM evolvers in SkillClaw (91.0% SER) and transfer to Trace2Skill (61.5% SER) at 10% attacker support. Controlled studies show three consistent attacker records in a 30-record batch suffice while one is much weaker, and ablations highlight recurring support, causal framing, and domain-aligned encoding as main success factors, framing evidence promotion as a critical security boundary for self-evolving agents.",
-        "why_it_matters": "It pinpoints the promotion/attribution step in skill evolution as an attack surface with quantified vulnerability and transferable effects, informing defenses for agentic LLMs and data-driven skill distillation pipelines.",
-        "score": 8.0,
-        "reason": "Robust context-aware segmentation for malicious instructions (IPI) targets detection of embedded prompt injections tailored to a query\u2014highly relevant to defending agents and evaluating instruction-level attacks.",
-        "slot": "relevance",
-        "sections": [
-          "llm-security",
-          "evaluation",
-          "agents"
         ]
       },
       {
@@ -3047,6 +3046,20 @@
     ],
     "efficiency": [
       {
+        "title": "Personalized Federated Sparse Adaptation of Time-Series Foundation Models",
+        "url": "http://arxiv.org/abs/2608.04695v1",
+        "summary": "The paper proposes a personalized federated sparse adaptation framework for TSFMs in building energy forecasting, using a heterogeneous temporal MoE adapter placed after the pretrained representation and a sequence-level router that assigns each 168-hour window to top-k experts specialized for distinct temporal structures. It evaluates global FL, local training, and personalized FL variants with globally shared vs client-private expert banks across 50 buildings and three TSFM backbones. Results show personalization consistently outperforms Global FL-MoE and Local MoE, the best sparse-adaptation strategy depends on backbone and metric, and routing reveals client-level expert specialization, expert concentration, and near-uniform routing across backbones, implying adaptation should be client- and backbone-aware.",
+        "why_it_matters": "Combines federated personalization with sparse MoE routing for TSFMs under non-IID meter data, offering actionable design signals (client-/backbone-aware adapters) relevant to secure on-device adaptation and privacy-preserving deployment.",
+        "score": 7.0,
+        "reason": "Federated personalization for TS foundation models directly matches the reader's primary interest in TSFMs and on-device/private data adaptation; MoE adapter and sparse adaptation are relevant to architecture and efficient adaptation.",
+        "slot": "relevance",
+        "sections": [
+          "tsfm",
+          "efficiency",
+          "has-code"
+        ]
+      },
+      {
         "title": "Who Verifies the Benchmark? Decentralizing Trust in Large Language Model Evaluation",
         "url": "http://arxiv.org/abs/2608.07762v1",
         "summary": "The paper argues that LLM evaluation lacks verifiability and is vulnerable to unverified vendor claims and LLM-judge identity bias, with real-world consequences highlighted by the January 27, 2025 market panic. Using seven verifier models, it measures how disclosing the source model identity shifts scores across 58 factual, reasoning, political, and preference tasks, finding minimal effects on factual items, moderate effects on stress-reasoning, and large effects on geopolitically sensitive topics, with examples including GLM 5.1 (+7.00, p=0.0249) and Llama 3.3 70B (+1.56, p=0.00). It proposes a blockchain-based commit\u2013reveal protocol with Autonomous Economic Agents to create an on-chain, tamper-evident audit trail that separates blind evaluation from post-hoc claims and eases verification for researchers and leaderboard operators.",
@@ -3157,20 +3170,6 @@
           "efficiency",
           "llm-security",
           "evaluation"
-        ]
-      },
-      {
-        "title": "Learning with Bilevel-Minimax Optimization for Efficient and Reliable Transfer Attacks",
-        "url": "http://arxiv.org/abs/2608.11815v1",
-        "summary": "The paper reframes transfer-based adversarial attacks as a bilevel-minimax problem, modeling the coupling among initialization, surrogate adaptation, and gradient-based perturbation optimization. It introduces BMAT, which uses a Soft Weight Modulator and an Implicit Gradient Approximator to enable ternary coupling and improve cross-architecture generalization, with accompanying theoretical analysis of the optimization dynamics. Experiments on classification and segmentation show BMAT outperforms 10+ baselines across 30+ victim models and can halve mIoU, with code released at the provided repository.",
-        "why_it_matters": "Offers a principled bilevel-minimax view and practical solver that materially improves black-box transferability, relevant to robust LLM jailbreak defenses and cross-architecture time-series model attacks/defenses.",
-        "score": 6.0,
-        "reason": "Analyzes geometry of rollout RL for LLMs and proposes diagnostics/constraints \u2014 relevant to post\u2011training stability of LLM agents and rollout-based fine\u2011tuning used in safety work.",
-        "slot": "relevance",
-        "sections": [
-          "agents",
-          "alignment",
-          "efficiency"
         ]
       },
       {
@@ -3811,20 +3810,35 @@
     ],
     "model-releases": [
       {
-        "title": "ActBench: Self-Evolving Benchmark of Behavioral Safety in Cowork Agents",
-        "url": "http://arxiv.org/abs/2608.09476v1",
-        "summary": "The paper defines behavioral safety for cowork agents and presents ActBench, a self-evolving benchmark that evaluates behavior risk from execution trajectories via paired benign/adversarial cases with task-reachable payloads. It introduces a reward-guided beam search with reflection to optimize attack effectiveness and task utility, and a dual evidence verification mechanism using logs and LLM-based trajectory evidence to assess safety and utility. Evaluating 15 LLMs and 6 cowork agents over 24,000 trajectories, they report attack success rates varying 10.1%\u201394.4% across models under a fixed harness and 73.7%\u201394.4% across agents under a fixed base model, with higher variation across models and high attack success across harnesses.",
-        "why_it_matters": "Gives a trajectory-centric, evolving benchmark and attack/verification tools to stress-test and compare LLM-based agents\u2019 behavioral safety across APIs and execution spaces\u2014useful for red-teaming, agent tuning, and safety eval pipelines.",
-        "score": 4.0,
-        "reason": "Diffusion model merging backdoor mitigation is solid adversarial-ML work but targets generative image models rather than LLMs or time-series models\u2014peripheral relevance for methodology.",
+        "title": "Measure, Don't Optimize: Forecasting Recovery in LLM Unlearning",
+        "url": "http://arxiv.org/abs/2608.11408v1",
+        "summary": "The paper introduces J-Access, an inference-time audit that projects intermediate representations into vocabulary space to measure how often target concepts remain accessible along the output pathway, hypothesizing that residual accessibility predicts recovery susceptibility. Auditing 398 public unlearned models across eight methods, they find most retain accessibility above a retain-only gold level, pre-attack accessibility predicts recovery speed and extent at the model level (but not per-fact), and directly minimizing J-Access causes the model to hide knowledge from the audit while increasing post-attack recovery. They conclude J-Access is useful as a model-level diagnostic for residual susceptibility and caution against turning internal audits into optimization targets without validation.",
+        "why_it_matters": "Offers an actionable, model-level risk signal for unlearning robustness and a clear warning about Goodharting internal audits\u2014relevant for designing secure unlearning and audit pipelines in LLMs.",
+        "score": 7.0,
+        "reason": "Investigates latent recovery after LLM unlearning with an audit (J\u2011Access) \u2014 important for data\u2011removal/extraction risk monitoring and evaluation methodology.",
         "slot": "relevance",
         "sections": [
-          "adversarial-ml",
+          "llm-security",
+          "evaluation",
           "model-releases"
         ]
       }
     ],
     "longform": [
+      {
+        "title": "Capability-Routed Guard: Defending Large Reasoning Models Against Reasoning-Centric Jailbreaks",
+        "url": "http://arxiv.org/abs/2608.07892v1",
+        "summary": "The paper introduces Capability-Routed Guard (CRG), a model-agnostic, inference-time guardrail for closed-source LRMs that reframes prompt defense as capability routing by constructing a trusted representation of authorized task, active context, safety evidence, and capability-transfer risk. CRG supports route-specific execution to block high-risk requests, constrain ambiguous ones, and forward low-risk requests via trusted active context, then applies TraceCheck for consistency with the authorized task and uses a restricted fallback to preserve utility for low-risk benign prompts. Experiments show CRG mitigates diverse reasoning-centric jailbreaks while preserving benign utility and avoiding over-refusals, with component analyses indicating complementary benefits and the importance of coordinated defenses for securing LRMs.",
+        "why_it_matters": "Directly targets reasoning-centric jailbreaks in LRMs with a practical, model-agnostic routing + verification pipeline that can be layered onto closed-source systems without weights or trace access.",
+        "score": 6.0,
+        "reason": "Discussion of verification, contamination, and LLM-as-judge reliability informs benchmark trust and evaluation methods, important context for honest security/benchmarking practices.",
+        "slot": "relevance",
+        "sections": [
+          "evaluation",
+          "policy",
+          "longform"
+        ]
+      },
       {
         "title": "Intern-S2-Preview: Scientific Agentic Foundation Model",
         "url": "http://arxiv.org/abs/2608.13505v1",
@@ -3851,20 +3865,6 @@
           "tsfm",
           "longform",
           "evaluation"
-        ]
-      },
-      {
-        "title": "PolicyKG: An Agentic LLM Pipeline for Translating Institutional Policies into SHACL Knowledge Graphs",
-        "url": "http://arxiv.org/abs/2608.09028v1",
-        "summary": "PolicyKG is an agentic LLM pipeline that converts policy PDFs into SHACL via deontic sentence classification, FOL lifting, and a LangGraph workflow with validators, centered on a YAML Corpus Adapter that grounds predicates to a target ontology. On the AIT Policies and Procedures corpus, it reports 86.9% deontic classification accuracy (\u03ba=.709), SHACL F1=.866 on 69 shapes, 79.2% FOL coverage with the remainder using NL-to-SHACL fallback, and an audit placing the upper 95% bound on higher-order logic usage at 0.67%. Domain retargeting via registry swap improves GDPR property alignment (1/15\u219211/15; Fisher p<.001; h=1.53), but macro F1 drops to .370 on LexDeMod due to vocabulary mismatch, while outputs are hash-identical across runs.",
-        "why_it_matters": "Demonstrates a practical, auditable NL\u2192FOL\u2192SHACL pipeline with ontology-grounding and run determinism, highlighting domain shift/vocab grounding issues relevant to secure LLM agents and robust constraint generation.",
-        "score": 4.0,
-        "reason": "Practical pipeline for translating policies into formal constraints using LLMs and validators touches agentic system tooling and automated compliance verification, useful for governance/evaluation of agent behavior.",
-        "slot": "relevance",
-        "sections": [
-          "agents",
-          "evaluation",
-          "longform"
         ]
       },
       {
