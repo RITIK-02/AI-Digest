@@ -1,12 +1,12 @@
 {
-  "date": "2026-08-16",
+  "date": "2026-08-17",
   "brief": {
-    "run_date": "2026-08-16",
+    "run_date": "2026-08-17",
     "provider": "openrouter",
     "model": "openai/gpt-5",
-    "content_md": "Good morning. The prompt-injection/agentic beat is unusually rich today, with a few pieces that also touch long-horizon evaluation and TSFM-style sequence thinking.\n\nFirst, a clean swing at over-refusal in prompt-injection defenses: BASIS argues most aligned models already shrug off many injections, so binary refuse-on-detection wastes capability. They read the prefill attention and train two sparse linear probes\u2014a quick \u201cexistence\u201d gate and a \u201cbreach\u201d probe\u2014to decide, per sample, whether an injection is present and whether it will actually breach instructions. It\u2019s all done in the prefill without extra generations, so you get near-perfect detection while sharply cutting false refusals on benign-but-attack-shaped inputs. The upshot for agent harnesses: use robust instruction templates, add BASIS as a no-latency gate, and you reclaim a chunk of lost utility without opening the door.\n\nAttackers aren\u2019t standing still, though. Two agentic red-teamers are worth your coffee. PIMiner learns a cross-model strategy library for prompt injection and transfers it to unseen targets with only ~10 queries per sample; it posts strong ASR on IPIArena and AgentDojo and embarrasses several RL-based red teamers that don\u2019t generalize. Complementing that, SAVOR moves the adaptation offline: it distills strategy abstractions from (success, failure) traces and then hits new targets one-shot at test time\u2014no iterative probing\u2014still beating prior attacks by sizable margins, and transferring across defenses. Together they suggest you should evaluate under both realistic one-shot IPIs and low-budget transfer attackers; any defense that requires many interactions to adapt is living on borrowed time.\n\nOn the defensive evaluation side, HarnessSafe finally treats \u201cpersistent carriers\u201d as first-class citizens in agent harnesses\u2014memories, tools, skill stores, etc.\u2014and scores how risks propagate over multi-stage lifecycles rather than with a flat ASR. The finding you\u2019ll care about: containment is carrier-specific and highly configuration-dependent, and simple success-rate summaries miss where attacks stall or sail through. If you maintain multi-session or tool-rich agents, a trace-based lifecycle readout like this is the right unit of analysis.\n\nZooming out, a large, careful survey on long-horizon agents\u2014The Horizon Gap\u2014disentangles long-horizon vs long-context vs long-term memory and catalogues where plans fail when you stretch into multi-hour, multi-step regimes. The recurring theme: outcome-only signals go to mush as horizons grow, so dense, process-level signals and credit assignment matter. For security this is practical advice: if you\u2019re auditing or training long-running agents, you need trajectory diagnostics and process rewards that separate harness capability from model capability, or you\u2019ll overfit to the easy parts and miss the slow burns.\n\nSupply chain risks in agent skills get sharper with ElasticBack, a conditional backdoor that lives entirely in a single \u201cskill\u201d file: a benign-looking query trigger plus a semantically anchored rule inside the skill, activating only when both align. No weight changes, high ASR, near-zero FPR, and it evades common deployment defenses. Pair that with SkillsMetric\u2019s static-analysis map of what you can and cannot catch in skill repos (great on exfil and stego, blind on host destruction via common shells and weak on prompt injection) and you have a concrete to-do: strengthen ingestion pipelines with semantic review and runtime checks; static analysis won\u2019t save you alone.\n\nTwo pieces refine how we measure and gate risk at inference. ProbGuard reframes guardrails as calibrated risk over the model\u2019s early output distribution; by Monte-Carloing prefixes and calibrating, it caps jailbreak success to ~1% after ~10 tokens with far better Brier/ECE than baselines. This plays nicely with trajectory-aware agents: stop early when the risk spikes, rather than post hoc refusing. In a similar \u201cmeasure what matters\u201d vein, a sobering reproducibility audit\u2014From Runnable to Verifiable\u2014shows how fragile many LLM/agent security artifacts are: low end-to-end run rates, mislabeled CVEs, and flaky oracles. They propose a simple, pre-registered ladder (R0/R1 repairs, patched counterfactuals, evidence grades) you can lift straight into your evals; if you rely on embedded oracles without clean counterfactuals, your reported safety could be wishful thinking.\n\nFinally, one outside your usual lane but worth it if you think like a sequence-modeler: Align-RAG for time-series forecasts shows that a training-free, closed-form amplitude/phase alignment of retrieved windows fed into a frozen TSFM beats a trained retrieval adapter and lifts several frozen backbones. The interesting crossover for LLM agents is the message, not the domain: frozen backbones can exploit well-aligned demonstrations without learned fusion, so for retrieval-augmented reasoning or tool use, simple alignment transforms might deliver most of the gain without another training loop\u2014and without expanding your attack surface.\n\nIf you only pick one to action this week: wire BASIS-style prefill probes ahead of your agent harness, and re-run your red-team with PIMiner\u2019s low-budget transfer and SAVOR\u2019s one-shot attacks under HarnessSafe\u2019s lifecycle traces. Then add ProbGuard\u2019s early-risk stop to your decoding stack. The rest will read as familiar\u2014but with these, your over-refusal budget, eval fidelity, and attacker model all get markedly closer to reality.",
-    "cost_usd": 0.04058,
-    "created_at": "2026-08-16T05:23:18.274794+00:00"
+    "content_md": "Good morning. Today\u2019s crop tilts heavily toward agent security with a few sharp tools for long-horizon reliability, plus one adjacent time-series piece that\u2019s worth your coffee.\n\nBASIS is the standout on prompt-injection defense. It leans into a useful observation: robust instruction templates plus alignment already deflect a lot of injections, so blanket refuse policies waste utility. BASIS builds two sparse linear probes over prefill attention\u2014an existence probe and a breach probe\u2014and runs them in a cascaded gate without extra LLM calls. The key is an attention-competition ratio feature that predicts per-sample breach and instruction robustness. Across 6 open models, detection is near-perfect while cutting over-refusals on \u201csafe attack\u201d inputs. The upshot: a cheap, deployable selector that complements your current guards and helps budget false positives without adding inference hops.\n\nTwo attacker papers raise the bar for agentic prompt injection. PIMiner trains an agentic red team over sequences of (dataset, target) pairs to build a transferable strategy library; at test time it ports strategies to unseen targets and hits high ASR with only ~10 queries per sample, beating heavier RL attackers. In parallel, SAVOR moves adaptation offline: it distills outcome-conditioned reflections from past runs into a frozen memory that emits a single, one-shot IPI payload at test time. Across Agent Security Bench and a new executable IPI suite, SAVOR tops prior attacks and transfers across defenses. Read together with BASIS, the story is a maturing offense\u2013defense loop: cheaper, transferable attacks that don\u2019t need interactive probing, and a lightweight, attention-probe defense that trims over-blocking without compromising speed.\n\nDefense and vetting of supply-chain components also get sharper edges. ElasticBack shows a conditional backdoor in agent \u201cskills\u201d: a benign-looking user trigger T plus an injected rule R inside a skill file activates malicious behavior without weight changes, with cross-model transfer and near-zero FPR. LoRAScan hits the adjacent adapter threat: detect backdoored LoRAs by pre-identifying a small set of sites whose down-projection activations stay flat on clean inputs but spike on triggers; at runtime, monitor and reject when spikes appear, no adapter edits required. If your deployment mixes marketplace skills and community LoRAs, these two papers together argue strongly for pre-deployment activation profiling and runtime monitoring at adapter/skill boundaries.\n\nIf you\u2019re tuning open weights under hostile adaptation, Gradient Immunity proposes a neat release-time shield: a null-space cubic layer plus an inverse adapter that blocks gradients from harmful samples while preserving forward behavior. In the PPOW setting (most weights trainable except a protected slice), it keeps post-finetune attack success near pre-release baselines on fixed thresholds, with a clearer safety\u2013utility frontier on harder sets. Not a panacea, but a principled way to raise the cost of malicious fine-tuning without downstream cooperation.\n\nEvaluation and measurement both get overdue reality checks. HarnessSafe is a welcome benchmark for persistent-carrier risks in agent harnesses (memories, tools, skills, etc.). It traces attacks end-to-end and shows that carrier-specific containment and harness\u2013model interactions dominate outcomes; raw ASR often fails to reflect how far an exploit actually propagates. In a similar \u201cmeasure the thing you care about\u201d vein, The Horizon Gap survey synthesizes 1,500+ papers to argue that long-horizon reliability collapses when supervision is outcome-only; step-level signals, trajectory diagnostics, and careful decomposition of model vs harness capability are recurring necessities. If you\u2019re designing long-horizon agent evals or training, these two pieces converge on the same theme: you need lifecycle-aware traces and process-level signals, not just end success.\n\nFor model vetting, a black-box trick worth operationalizing: self-feeding loops for backdoor discovery. Recursively feeding the model\u2019s outputs back as inputs drifts it toward fine-tune modes; across six open LLMs and eleven backdoor types, this cheap test surfaces embedded triggers with high model-level precision, even when single prompts fail. The method isn\u2019t high-recall per prompt, but a small prompt set and \u22644 steps already gives you 100% model-level precision in the study\u2014an easy addition to your pre-deploy checklist.\n\nTrajectory-level uncertainty and risk are bubbling up as first-class citizens. A study on trajectory-adapted UQ finds that black-box self-consistency (trajectory equivalence and action-set consistency) generally wins for multi-turn agents, while reflexive self-assessment is the strongest low-cost baseline; token-probability scores hinge on how you aggregate across turns. In parallel, ProbGuard treats safety as early-stage risk over output distributions, calibrating Monte Carlo over prefixes to stop unsafe generations within ~10 decoding steps with excellent calibration. Together, they suggest a practical recipe: use calibrated, distribution-aware early stopping plus trajectory-consistency signals for gating multi-turn tool use.\n\nOutside your usual lane, but highly relevant for TSFM thinking: Align-RAG shows that for time-series forecasting you can skip training fusion layers entirely\u2014closed-form amplitude rescaling and integer-lag phase alignment of retrieved windows fed into a frozen backbone beat a learned retrieval adapter on a strong Chronos variant and improve several other TSFMs zero-shot. The mechanism lines up with a ridge predictor over aligned pairs, suggesting many TSFMs already support useful in-context fusion if you align first. If you\u2019ve been defaulting to learned adapters for extended-horizon or domain-shifted forecasting, this is a clean baseline to adopt\u2014and the analogy to LLM RAG is hard to miss.\n\nIf you only have time to skim abstracts: prioritize BASIS (defense without extra calls), PIMiner and SAVOR (transferable, query-efficient and one-shot IPI), ElasticBack plus LoRAScan (skill/adaptor supply-chain vetting), HarnessSafe (persistent-carrier eval), the Horizon Gap survey (signal design for long-horizon agents), self-feeding backdoor checks (cheap black-box vetting), and ProbGuard plus trajectory UQ (distribution-aware early intervention). The TSFM bonus is Align-RAG\u2014simple, training-free retrieval alignment that actually moves the needle.",
+    "cost_usd": 0.041225,
+    "created_at": "2026-08-17T05:34:23.153996+00:00"
   },
   "stories": [
     {
@@ -21,6 +21,20 @@
         "agents",
         "llm-security",
         "adversarial-ml"
+      ]
+    },
+    {
+      "title": "When Do PEFT Adaptations Leak Structure? Measuring Black-Box Structural Bounds in Public-Base Model Services",
+      "url": "http://arxiv.org/abs/2608.05036v1",
+      "summary": "The paper introduces VectorHijack-SR, a black-box measurement method that turns paired victim/base residuals into calibrated bounds over PEFT family, layer locality, and coarse rank, using aggregated query-level statistics and a service-disjoint classifier plus a cross-fitted hierarchical rejector to test LoRA-manifold membership. Empirically, family leakage exceeds chance across multiple backbones/tasks, rank inference varies by task, the rejector attains AUROC 0.804 and high known-set accuracy but struggles with structurally close DoRA/LoRA+head, and exact-version linkage on held-out LoRA-r64 services reaches AUC 0.940. Despite measurable structural leakage, experiments show a visibility\u2013exploitability gap: two-stage recovery offers no fair-budget query savings, posterior-selected PEFT underperforms distill-then-convert PEFT, and free-running generation remains near chance.",
+      "why_it_matters": "It provides concrete, black-box evidence and metrics for structural leakage from PEFTed services with known bases, informing red-team audits, model fingerprinting, and security evaluations of adapter deployment choices.",
+      "score": 8.0,
+      "reason": "Directly studies information leakage from PEFT adapters in public-base services \u2014 highly relevant to model extraction, PIi leakage, and red-team measurement for LLM security.",
+      "slot": "relevance",
+      "sections": [
+        "llm-security",
+        "adversarial-ml",
+        "evaluation"
       ]
     },
     {
@@ -77,7 +91,9 @@
         "llm-security",
         "evaluation"
       ]
-    },
+    }
+  ],
+  "stories_overflow": [
     {
       "title": "Toward Metacognitive One-Shot Indirect Prompt Injection: Strategy Abstraction Via Outcome-Conditioned Reflection",
       "url": "http://arxiv.org/abs/2608.08795v1",
@@ -92,9 +108,7 @@
         "adversarial-ml",
         "evaluation"
       ]
-    }
-  ],
-  "stories_overflow": [
+    },
     {
       "title": "From Runnable to Verifiable: An Independent Reproducibility Study of LLM/Agent-Driven Vulnerability Validation Artifacts",
       "url": "http://arxiv.org/abs/2608.09567v1",
@@ -108,20 +122,6 @@
         "agents",
         "evaluation",
         "longform"
-      ]
-    },
-    {
-      "title": "Telemetry and Concealment in Self-Adapting Generative AI: Logging Architecture, Adversarial Model Hiding, and the Limits of Detection",
-      "url": "http://arxiv.org/abs/2608.09069v1",
-      "summary": "The paper addresses governance for self-updating generative models by proposing a telemetry architecture that operates in discrete and continuous time, including a Minimal Sufficient Statistic for audits, a Merkle-chain for discrete weight sequences, an Ito-based continuous-time generalization, and KL divergence stopping-time logging. It then formalizes the Model Hiding Problem under adversarial providers and catalogs six attack strategies against the telemetry architecture across discrete and continuous time, providing a countermeasure for each. The result is a dual-regime approach where continuous telemetry narrows but cannot replace periodic invasive audits, aligning with traditional MRM pillars and remaining architecture-agnostic.",
-      "why_it_matters": "It offers concrete telemetry and adversarial-resilience mechanisms directly applicable to secure deployment and monitoring of self-adapting LLMs and time-series models where online weight updates break standard validation.",
-      "score": 9.0,
-      "reason": "Directly addresses governance and detection challenges for self-adapting generative models, including telemetry and concealment\u2014highly relevant to security, operational risk, and monitoring of adaptive LLMs.",
-      "slot": "relevance",
-      "sections": [
-        "policy",
-        "llm-security",
-        "model-releases"
       ]
     },
     {
@@ -182,6 +182,34 @@
       ]
     },
     {
+      "title": "MazeRunner: Nonlinear Task and Clue Orchestration for LLM-driven Black-Box Automated Penetration Testing",
+      "url": "http://arxiv.org/abs/2608.14216v1",
+      "summary": "MazeRunner introduces a three-agent orchestration framework for autonomous black-box penetration testing that separates global orchestration, context-intensive execution, and failure-oriented review while persistently tracking task states and evidence. Designed to handle nonlinear attack graphs with ambiguous failures and long-horizon clues, it enables action revision, prerequisite recovery, branch switching, and long-range clue correlation. On 10 HTB targets with a 20M-token cap and leakage controls, MazeRunner (Claude Sonnet 4.5) completes 47.7% of annotated subtasks and achieves user-level or higher access on six targets (root on two), outperforming PentestGPT-V2 and Claude Code baselines that reach user-level access on only two and never root.",
+      "why_it_matters": "Demonstrates a concrete orchestration pattern and evaluation showing improved branch exploration and shell acquisition under strict budget/leakage controls, relevant to secure LLM agent design and planning for nonlinear, long-horizon tasks.",
+      "score": 9.0,
+      "reason": "Automated black-box penetration testing with LLM agents targets tooling, exploration failures, and realistic nonlinear attack graphs\u2014highly relevant to LLM security and agentic attack surfaces.",
+      "slot": "relevance",
+      "sections": [
+        "agents",
+        "llm-security",
+        "evaluation"
+      ]
+    },
+    {
+      "title": "Evaluating Agentic Learning Harness Capabilities Without Labels via the Scaling Hypothesis",
+      "url": "http://arxiv.org/abs/2608.13608v1",
+      "summary": "The paper proposes an unlabeled evaluation framework for agentic continual learning harnesses, leveraging the scaling hypothesis by using a stronger teacher to provide sparse corrections to a smaller student. Harness quality is scored by the student\u2019s convergence toward the teacher, and across security tasks, model families, and harness designs, teacher-relative lift correlates with improvement against a held-out gold standard. They also find LLM-as-a-judge between similarly powered models provides no usable signal and suggest the same harness can improve a teacher-sized model when humans provide sparse, high-precision corrections.",
+      "why_it_matters": "Offers a practical, label-free metric for assessing retrieval/memory harnesses in operational security settings and aligns with scaling-based evaluation strategies familiar from LLM distillation and RLHF work.",
+      "score": 9.0,
+      "reason": "Directly about retrieval-augmented methods for extended forecasting with pretrained time-series models \u2014 core interest in TSFM, efficient adaptation alternatives to fine-tuning.",
+      "slot": "relevance",
+      "sections": [
+        "tsfm",
+        "efficiency",
+        "has-code"
+      ]
+    },
+    {
       "title": "Gradient Immunity: Null-Space Resistance to Malicious Fine-Tuning",
       "url": "http://arxiv.org/abs/2608.05045v1",
       "summary": "The paper targets the PPOW setting where most weights are trainable but a small safety-critical component is preserved, and proposes a Unidirectional Safety Gate implemented as a Null Space Cubic Layer plus an Inverse Adapter after the final Transformer layer. The cubic layer blocks or suppresses gradients from harmful samples whose hidden states lie within a calibrated protected region (threshold set using defender-held harmful data), while the Inverse Adapter restores the base model\u2019s forward behavior. Across six model\u2013dataset settings, this keeps post-finetuning attack success near pre-release levels under a fixed threshold, maintains high safe-pass on easier settings, and shows a clearer safety\u2013utility trade-off on BeaverTails unsafe samples, indicating release-time representation-space blocking can raise the cost of malicious adaptation without downstream cooperation.",
@@ -222,20 +250,6 @@
         "llm-security",
         "evaluation",
         "agents"
-      ]
-    },
-    {
-      "title": "When Do PEFT Adaptations Leak Structure? Measuring Black-Box Structural Bounds in Public-Base Model Services",
-      "url": "http://arxiv.org/abs/2608.05036v1",
-      "summary": "The paper introduces VectorHijack-SR, a black-box measurement method that turns paired victim/base residuals into calibrated bounds over PEFT family, layer locality, and coarse rank, using aggregated query-level statistics and a service-disjoint classifier plus a cross-fitted hierarchical rejector to test LoRA-manifold membership. Empirically, family leakage exceeds chance across multiple backbones/tasks, rank inference varies by task, the rejector attains AUROC 0.804 and high known-set accuracy but struggles with structurally close DoRA/LoRA+head, and exact-version linkage on held-out LoRA-r64 services reaches AUC 0.940. Despite measurable structural leakage, experiments show a visibility\u2013exploitability gap: two-stage recovery offers no fair-budget query savings, posterior-selected PEFT underperforms distill-then-convert PEFT, and free-running generation remains near chance.",
-      "why_it_matters": "It provides concrete, black-box evidence and metrics for structural leakage from PEFTed services with known bases, informing red-team audits, model fingerprinting, and security evaluations of adapter deployment choices.",
-      "score": 8.0,
-      "reason": "Directly studies information leakage from PEFT adapters in public-base services \u2014 highly relevant to model extraction, PIi leakage, and red-team measurement for LLM security.",
-      "slot": "relevance",
-      "sections": [
-        "llm-security",
-        "adversarial-ml",
-        "evaluation"
       ]
     },
     {
@@ -310,21 +324,6 @@
       ]
     },
     {
-      "title": "DiffSafeMerge: Mitigating Backdoor Inheritance in Diffusion Model Merging",
-      "url": "http://arxiv.org/abs/2608.09445v1",
-      "summary": "The paper highlights that merging diffusion checkpoints can inherit dormant backdoors from compromised public sources while maintaining normal-looking generations, and mitigating this is hard without knowing the attacker specifics or sacrificing quality. It proposes DiffSafeMerge, which uses a small unlabeled clean set and fixed attack-agnostic stress probes to score source blocks, attenuate suspicious contributions toward a trusted reference, and choose attenuation under a clean denoising-loss budget. Evaluated across four attacks, two datasets, and 21 targets, DSM preserves zero worst-target ASR where intended merging already had it, eliminates remaining matches over three seeds even when baseline ASR was 48\u2013100%, and among methods with zero worst-target ASR on both datasets achieves the lowest case-averaged FID in the seed-0 comparison.",
-      "why_it_matters": "Backdoor-safe merging for diffusion checkpoints parallels secure model composition in LLMs and offers a practical, attack-agnostic mitigation strategy that balances safety with generative quality.",
-      "score": 8.0,
-      "reason": "Telemetry and concealment for self-adapting generative AI addresses governance and detection limits for models that modify themselves in production\u2014important for model-risk management, attack concealment, and detection strategies.",
-      "slot": "relevance",
-      "sections": [
-        "policy",
-        "llm-security",
-        "adversarial-ml",
-        "evaluation"
-      ]
-    },
-    {
       "title": "SkillsMetric: Mapping the Detection Boundary of Static Analysis for Malicious Agent Skills",
       "url": "http://arxiv.org/abs/2608.08468v1",
       "summary": "This work introduces SkillsMetric, a five-stage static analysis framework that scores LLM agent skills across pattern density, statistical anomaly, dataflow taint, import anomaly, and capability mismatch. Using an adversarial dataset of 2,266 skills covering 16 attack types and the SkillMD-138K corpus, it reports AUC 0.93 and 5-fold CV F1 73.4%\u00b10.5%, with 93% detection for data exfiltration and steganographic payloads. It also exposes blind spots\u20140% detection for host destruction via common shell commands and 42% for prompt injection\u2014arguing static analysis alone is insufficient and should be paired with semantic review in defense-in-depth.",
@@ -336,20 +335,6 @@
         "agents",
         "llm-security",
         "adversarial-ml"
-      ]
-    },
-    {
-      "title": "Persistent Semantic Entities in Tool-Augmented LLM Systems",
-      "url": "http://arxiv.org/abs/2608.07952v1",
-      "summary": "The paper formalizes Persistent Semantic Entities (PSEs) in tool-augmented LLM agents\u2014defined by name binding, event triggering, and cross-boundary propagation\u2014and shows all 24 tested models are susceptible, with name binding necessary and dominant (0% without it). Persistence depends on contamination type: preference contamination persists undegraded (100% at t=10), instruction contamination persists where adopted, persona injection partially decays (90%\u219210%), and factual injection varies by model (self-corrected on Llama-3.1-8B and GPT-4o-mini but not on Qwen2.5-coder variants). Context-isolated self-verification reduces contamination by 20\u201379% (median 36.5%) versus keyword detectors with systematic false positives, and contamination compounds 1.9\u00d7 through a four-stage agent pipeline (40%\u219275%), with preference/instruction contamination highlighted as a concerning attack surface.",
-      "why_it_matters": "Directly informs red-teaming and defenses for agentic LLMs by identifying name-binding-driven, cross-session contamination modes that persist, evade naive monitoring, and amplify in pipelines.",
-      "score": 8.0,
-      "reason": "Inference-time guard that routes capabilities to avoid reasoning-centric jailbreaks targets a new, practical jailbreak class and proposes model-agnostic mitigations relevant for deployment.",
-      "slot": "relevance",
-      "sections": [
-        "llm-security",
-        "agents",
-        "evaluation"
       ]
     },
     {
@@ -406,6 +391,34 @@
       "sections": [
         "llm-security",
         "adversarial-ml",
+        "evaluation"
+      ]
+    },
+    {
+      "title": "The More Popular, The Harder to Forget: Adaptive Popularity for LLM Unlearning",
+      "url": "http://arxiv.org/abs/2608.14229v1",
+      "summary": "The paper observes that popular facts are memorized more deeply in LLM pretraining and are harder to unlearn, while prior unlearning methods apply uniform gradient pressure regardless of frequency. It proposes AdaPop, which scales unlearning pressure using local token confidence and a per-fact popularity-dependent exponent from an external proxy, and uses a dual-ascent controller to automatically tune the retain penalty each epoch. On three model families and two benchmarks, AdaPop reduces leakage of forgotten content by ~5x on paraphrases and ~1.6x on adversarial reformulations, with internal metrics showing larger divergence from pre-unlearning states on the forget set and closer retention on the retain set compared to baselines.",
+      "why_it_matters": "Targets frequency-aware unlearning with automated retain/forget control, improving robustness to paraphrase/adversarial probes\u2014relevant for red-teaming, safety fine-tuning, and deployment-time data governance.",
+      "score": 8.0,
+      "reason": "Directly tackles unlearning/memorization\u2014a core LLM security concern (data extraction, forgetting) with a practical adaptive method and measured leakage improvements.",
+      "slot": "relevance",
+      "sections": [
+        "llm-security",
+        "adversarial-ml",
+        "evaluation"
+      ]
+    },
+    {
+      "title": "Trajectory Dynamics in Self-Supervised Learning Latent Space for Audio Deepfake Detection",
+      "url": "http://arxiv.org/abs/2608.13817v1",
+      "summary": "The authors hypothesize that physiological constraints in human speech induce structured trajectory dynamics in SSL latent spaces, which synthetic speech violates. They test this by training a causal LSTM next-frame predictor on bonafide speech using Wav2Vec2-Large-AntiDeepfake features and comparing it to a static global-average-pooling baseline, then adding a supervised Stage 2 MLP on frozen LSTM states to assess the role of spoof supervision. Their system attains competitive or SOTA results on six deepfake benchmarks, with best published EER on ASVspoof 2021 (0.75%) and a bonafide-only Stage 1 surpassing a supervised baseline on DE2024, while trajectory dynamics yield substantial gains particularly on cross-corpus settings with diverse synthesis methods.",
+      "why_it_matters": "It shows that modeling latent trajectory dynamics\u2014rather than utterance-level statistics\u2014adds robust, cross-corpus detection signal, aligning with interests in temporal inductive biases for LLM/sequence model security.",
+      "score": 8.0,
+      "reason": "Live, evolving benchmark for agentic time-series analysis maps closely to time-series foundation models, agentic workflows, and evaluation methodology for temporal validity.",
+      "slot": "relevance",
+      "sections": [
+        "tsfm",
+        "agents",
         "evaluation"
       ]
     },
@@ -492,6 +505,20 @@
         "llm-security",
         "evaluation",
         "model-releases"
+      ]
+    },
+    {
+      "title": "TimeSage-EV: A Live Benchmark for Agentic Time Series Analysis in Evolving Environments",
+      "url": "http://arxiv.org/abs/2608.14270v1",
+      "summary": "TimeSage-EV is a live benchmark for agentic time series analysis that evaluates temporal validity and cutoff-aware evidence use across 60 institutional scenarios and 1,485 scenario-period QA pairs from Feb 2023 to May 2026, spanning multiple release cadences. At each period, LLM agents receive time series data and source reports, with withheld target releases serving as ground truth, and are evaluated on state identification, data summarization, and outlook reasoning. Experiments with frontier LLM agents and TimeSage-1.0, a self-evolving agent with a reusable analytical skill library, show substantial performance gaps and recurring failures in temporal validity, exogenous context use, and adaptation, with monthly updates, code, a leaderboard, and failure-mode analyses released.",
+      "why_it_matters": "It offers a continuously updating, real-world benchmark to stress-test LLM agents\u2019 temporal grounding and adaptability\u2014key for secure, cutoff-aware forecasting and decision support in evolving time series contexts.",
+      "score": 7.0,
+      "reason": "Analysis of when agent skills fail informs robustness and harness design for agentic systems and red-teaming; valuable for understanding failure modes though somewhat broad.",
+      "slot": "relevance",
+      "sections": [
+        "agents",
+        "evaluation",
+        "llm-security"
       ]
     },
     {
@@ -647,20 +674,6 @@
       ]
     },
     {
-      "title": "Beyond Solvability: Task Learnability as a Static Prior for LLM RL Post-Training",
-      "url": "http://arxiv.org/abs/2608.09217v1",
-      "summary": "The paper introduces task learnability as a regime-conditional measure capturing how much tasks are expected to improve under a fixed LLM RL post-training setup, beyond snapshot solvability. They show learnability is reproducible across training contexts, predictive of downstream utility, and propose TrajVal, a probe-based estimator using a short probe run and two endpoint evaluations to approximate per-task learnability pre-training. TrajVal serves as a static prior for task sampling or as a multiplicative prior with online schedulers, improving data efficiency on math and logic benchmarks across model scales.",
-      "why_it_matters": "Offers a practical, pre-training prior for task selection in RL post-training that complements online schedulers, improving compute allocation for reasoning tasks.",
-      "score": 6.0,
-      "reason": "Proposes task learnability as a static prior to improve RL post-training sampling\u2014relevant to efficient RLHF/RL fine-tuning and evaluation of curricula for eliciting reasoning in LLMs (methodology applicable to red-teaming and costly post-training regimes).",
-      "slot": "relevance",
-      "sections": [
-        "alignment",
-        "evaluation",
-        "agents"
-      ]
-    },
-    {
       "title": "Model Discovery Agent: LLM-assisted Bayesian experiment design for data-efficient discovery of mechanistic world models",
       "url": "http://arxiv.org/abs/2608.09696v1",
       "summary": "The paper introduces the Model Discovery Agent (MDA), which pairs an LLM proposer for candidate mechanistic structures with Bayesian inference tools (SMC for parameters/structures, SBI for intractable likelihoods, and VoI for experimental design) to learn causal world models from few interventions. MDA works in an M-open setting by using predictive checks to detect model class misspecification, prompting the LLM to expand the hypothesis space and then identifying new parameters via designed experiments. The authors report that discovery and design are mutually reinforcing and that, on DPbench (physics), CHEMbench (chemistry), and HHbench (biology), MDA achieves state-of-the-art data-efficient model learning and interventional forecasting.",
@@ -731,20 +744,6 @@
       ]
     },
     {
-      "title": "Task- and dataset-specific information in protein language models",
-      "url": "http://arxiv.org/abs/2608.12090v1",
-      "summary": "Across 13 PLMs and 15 downstream tasks, intermediate-layer embeddings often outperform last-layer embeddings, contradicting the common practice of using the final layer. The layer at which task-relevant information concentrates depends on the task\u2013pretraining alignment and the dataset: residue-level tasks see information accumulate with depth, while whole-protein performance is dataset-driven, with DMS favoring shallow layers and diverse natural proteins favoring deeper layers. PLM performance degrades markedly on tasks involving artificial proteins.",
-      "why_it_matters": "Highlights layer- and dataset-specific representation selection, informing secure model probing, adversarial evaluation, and transfer strategies analogous to layerwise selection in LLMs and time-series FMs.",
-      "score": 6.0,
-      "reason": "Bilevel\u2011minimax formulation for transfer attacks improves black\u2011box adversarial transferability \u2014 relevant for adversarial robustness and attack methodology informing LLM security.",
-      "slot": "relevance",
-      "sections": [
-        "adversarial-ml",
-        "llm-security",
-        "evaluation"
-      ]
-    },
-    {
       "title": "Learning with Bilevel-Minimax Optimization for Efficient and Reliable Transfer Attacks",
       "url": "http://arxiv.org/abs/2608.11815v1",
       "summary": "The paper reframes transfer-based adversarial attacks as a bilevel-minimax problem, modeling the coupling among initialization, surrogate adaptation, and gradient-based perturbation optimization. It introduces BMAT, which uses a Soft Weight Modulator and an Implicit Gradient Approximator to enable ternary coupling and improve cross-architecture generalization, with accompanying theoretical analysis of the optimization dynamics. Experiments on classification and segmentation show BMAT outperforms 10+ baselines across 30+ victim models and can halve mIoU, with code released at the provided repository.",
@@ -770,6 +769,20 @@
         "agents",
         "tsfm",
         "longform"
+      ]
+    },
+    {
+      "title": "A Four-Axis Trustworthiness Benchmark for LLM-as-Judge in Principle-Based Regulation",
+      "url": "http://arxiv.org/abs/2608.14329v1",
+      "summary": "The paper argues LLM-as-judge for principle-based regulation must be evaluated on four axes: accuracy, paraphrase robustness, adversarial robustness, and calibration, and releases Principle-Bench with 168 FCA-aligned crypto promotion scenarios including paraphrase, keyword-stuffing, and boundary perturbations. It introduces Ceca, a calibrated, auditable assessor emitting per-exemplar counterfactual attributions, and evaluates keyword counting, three sentence-transformer embedders, an open-weight LLM-judge, and a calibrated cascade. Results show no method dominates all axes; a strong 120B judge drops from 0.74 to 0.27 accuracy under keyword-stuffed Consumer Duty inputs and another family\u2019s judge agrees at \u03ba=0.16 on that split, underscoring model-specific failures and the need for per-principle adversarial deception reporting and post-hoc calibration alongside aggregate accuracy.",
+      "why_it_matters": "Offers a concrete, multi-axis benchmark and calibrated assessment method to stress-test LLM judges against paraphrase and adversarial distribution shifts\u2014directly relevant to eval robustness and model governance in safety-critical LLM deployments.",
+      "score": 6.0,
+      "reason": "LLM-as-judge reliability and adversarial robustness directly relevant to evaluation methodology and guardrail assessment; crypto-financial focus slightly less aligned with core security/time-series interests.",
+      "slot": "relevance",
+      "sections": [
+        "evaluation",
+        "policy",
+        "llm-security"
       ]
     },
     {
@@ -811,20 +824,6 @@
         "agents",
         "efficiency",
         "llm-security"
-      ]
-    },
-    {
-      "title": "Taxonomy-Driven Analysis of Open-Source AI Risk Mitigation Tools",
-      "url": "http://arxiv.org/abs/2608.07446v1",
-      "summary": "The paper presents a taxonomy-driven protocol that uses an LLM-assisted RAG pipeline to map capabilities of 21 open-source LLM evaluation and security tools to 32 subcategories of the extended MIT AI Risk Mitigation and Response Taxonomy. The study finds a skewed tooling landscape concentrated on technical and operational controls, with major gaps in governance, legal/regulatory, and financial/market controls, and reports moderate inter-rater reliability (Fleiss\u2019 Kappa = 0.509) and an F1 score of 75.5% after majority voting. It proposes a layered risk-mitigation architecture that combines tool-based controls with organizational and regulatory processes and offers a practical mapping highlighting where human oversight is still needed.",
-      "why_it_matters": "Gives a concrete, reproducible mapping from OSS LLM security/eval tools to a recognized risk taxonomy, clarifying coverage gaps relevant to red teaming, guardrails, and trust pipelines for foundation models (including time-series variants).",
-      "score": 5.0,
-      "reason": "Using VLMs to encode time-series as images speaks to practical efficiency and cross-modal approaches for time-series analysis and could impact deployment/serving costs for TS workloads.",
-      "slot": "relevance",
-      "sections": [
-        "efficiency",
-        "tsfm",
-        "agents"
       ]
     },
     {
@@ -894,20 +893,6 @@
       "sections": [
         "efficiency",
         "agents"
-      ]
-    },
-    {
-      "title": "PolicyKG: An Agentic LLM Pipeline for Translating Institutional Policies into SHACL Knowledge Graphs",
-      "url": "http://arxiv.org/abs/2608.09028v1",
-      "summary": "PolicyKG is an agentic LLM pipeline that converts policy PDFs into SHACL via deontic sentence classification, FOL lifting, and a LangGraph workflow with validators, centered on a YAML Corpus Adapter that grounds predicates to a target ontology. On the AIT Policies and Procedures corpus, it reports 86.9% deontic classification accuracy (\u03ba=.709), SHACL F1=.866 on 69 shapes, 79.2% FOL coverage with the remainder using NL-to-SHACL fallback, and an audit placing the upper 95% bound on higher-order logic usage at 0.67%. Domain retargeting via registry swap improves GDPR property alignment (1/15\u219211/15; Fisher p<.001; h=1.53), but macro F1 drops to .370 on LexDeMod due to vocabulary mismatch, while outputs are hash-identical across runs.",
-      "why_it_matters": "Demonstrates a practical, auditable NL\u2192FOL\u2192SHACL pipeline with ontology-grounding and run determinism, highlighting domain shift/vocab grounding issues relevant to secure LLM agents and robust constraint generation.",
-      "score": 4.0,
-      "reason": "Practical pipeline for translating policies into formal constraints using LLMs and validators touches agentic system tooling and automated compliance verification, useful for governance/evaluation of agent behavior.",
-      "slot": "relevance",
-      "sections": [
-        "agents",
-        "evaluation",
-        "longform"
       ]
     },
     {
@@ -998,16 +983,17 @@
           ]
         },
         {
-          "title": "Matryoshka Language Model Suites",
-          "url": "http://arxiv.org/abs/2608.09703v1",
-          "summary": "The paper introduces a Matryoshka training framework that nests sub-models of increasing size into one end-to-end trained architecture, reducing total suite parameters and enabling step-wise distillation from the largest to all smaller sub-models. This structure is well-suited for speculative decoding because the draft model is contained within the verifier. A 500M/1.5B/3B suite matches independently trained baselines on benchmarks and perplexities while using 36% less training compute and yielding 14\u201326% higher speculative decoding throughput, with ablations provided on architectural choices.",
-          "why_it_matters": "It offers a practical path to multi-size LLM suites that cut training/inference cost and improve speculative decoding, directly relevant to secure, efficient deployment pipelines and scalable time-series/LLM hybrid stacks.",
-          "score": 9.0,
-          "reason": "Direct audit showing internal harmfulness scores can anti-rank successful jailbreaks\u2014highly relevant to guardrail evaluation, false-positive budgeting, and deployment filtering.",
+          "title": "When Experience Becomes Instruction: Trajectory Poisoning in Self-Evolving Agent Skill Systems",
+          "url": "http://arxiv.org/abs/2608.05563v1",
+          "summary": "The paper introduces PoisonedEvolution, a trajectory-poisoning attack on self-evolving skill (SES) systems that distill agent trajectories into persistent skills, where an attacker with skill-level black-box access contributes bounded evidence to influence skill promotion. It formalizes artifact poisoning as requiring Inclusion, Evolution Attribution, and Realization, identifying Attribution\u2014making target behaviors appear causally useful, recurrent, and generalizable\u2014as the key bottleneck, and demonstrates high success embedding target behaviors across six LLM evolvers in SkillClaw (91.0% SER) and transfer to Trace2Skill (61.5% SER) at 10% attacker support. Controlled studies show three consistent attacker records in a 30-record batch suffice while one is much weaker, and ablations highlight recurring support, causal framing, and domain-aligned encoding as main success factors, framing evidence promotion as a critical security boundary for self-evolving agents.",
+          "why_it_matters": "It pinpoints the promotion/attribution step in skill evolution as an attack surface with quantified vulnerability and transferable effects, informing defenses for agentic LLMs and data-driven skill distillation pipelines.",
+          "score": 8.0,
+          "reason": "Robust context-aware segmentation for malicious instructions (IPI) targets detection of embedded prompt injections tailored to a query\u2014highly relevant to defending agents and evaluating instruction-level attacks.",
           "slot": "relevance",
           "sections": [
             "llm-security",
-            "evaluation"
+            "evaluation",
+            "agents"
           ]
         }
       ],
@@ -1097,6 +1083,20 @@
           ]
         },
         {
+          "title": "Evaluating Agentic Learning Harness Capabilities Without Labels via the Scaling Hypothesis",
+          "url": "http://arxiv.org/abs/2608.13608v1",
+          "summary": "The paper proposes an unlabeled evaluation framework for agentic continual learning harnesses, leveraging the scaling hypothesis by using a stronger teacher to provide sparse corrections to a smaller student. Harness quality is scored by the student\u2019s convergence toward the teacher, and across security tasks, model families, and harness designs, teacher-relative lift correlates with improvement against a held-out gold standard. They also find LLM-as-a-judge between similarly powered models provides no usable signal and suggest the same harness can improve a teacher-sized model when humans provide sparse, high-precision corrections.",
+          "why_it_matters": "Offers a practical, label-free metric for assessing retrieval/memory harnesses in operational security settings and aligns with scaling-based evaluation strategies familiar from LLM distillation and RLHF work.",
+          "score": 9.0,
+          "reason": "Directly about retrieval-augmented methods for extended forecasting with pretrained time-series models \u2014 core interest in TSFM, efficient adaptation alternatives to fine-tuning.",
+          "slot": "relevance",
+          "sections": [
+            "tsfm",
+            "efficiency",
+            "has-code"
+          ]
+        },
+        {
           "title": "A Six-Dimensional Taxonomy of Post-Training Adaptation Techniques with Applications in AI Governance",
           "url": "http://arxiv.org/abs/2608.06246v1",
           "summary": "This survey synthesizes post-training adaptation techniques\u2014spanning retraining, fine-tuning, parameter-efficient adaptation, alignment, RAG, model editing, unlearning, calibration, and multimodal instruction tuning\u2014and introduces a six-dimensional taxonomy by mechanism, goal, data requirement, persistence, structural scope, and model type. It clarifies conflated terms (e.g., fine-tuning vs. RAG vs. prompting), traces the evolution of adaptation across model eras, and maps relationships such as inheritance, supersession, hybridization, and layered deployment stacks. The work presents a vocabulary to support technical documentation, change tracking, and governance analysis, and highlights open challenges in evaluation, reproducibility, persistent inference-time adaptation, unlearning, multimodal adaptation, and governance-aware workflows.",
@@ -1111,32 +1111,17 @@
           ]
         },
         {
-          "title": "Personalized Federated Sparse Adaptation of Time-Series Foundation Models",
-          "url": "http://arxiv.org/abs/2608.04695v1",
-          "summary": "The paper proposes a personalized federated sparse adaptation framework for TSFMs in building energy forecasting, using a heterogeneous temporal MoE adapter placed after the pretrained representation and a sequence-level router that assigns each 168-hour window to top-k experts specialized for distinct temporal structures. It evaluates global FL, local training, and personalized FL variants with globally shared vs client-private expert banks across 50 buildings and three TSFM backbones. Results show personalization consistently outperforms Global FL-MoE and Local MoE, the best sparse-adaptation strategy depends on backbone and metric, and routing reveals client-level expert specialization, expert concentration, and near-uniform routing across backbones, implying adaptation should be client- and backbone-aware.",
-          "why_it_matters": "Combines federated personalization with sparse MoE routing for TSFMs under non-IID meter data, offering actionable design signals (client-/backbone-aware adapters) relevant to secure on-device adaptation and privacy-preserving deployment.",
-          "score": 7.0,
-          "reason": "Federated personalization for TS foundation models directly matches the reader's primary interest in TSFMs and on-device/private data adaptation; MoE adapter and sparse adaptation are relevant to architecture and efficient adaptation.",
+          "title": "Trajectory Dynamics in Self-Supervised Learning Latent Space for Audio Deepfake Detection",
+          "url": "http://arxiv.org/abs/2608.13817v1",
+          "summary": "The authors hypothesize that physiological constraints in human speech induce structured trajectory dynamics in SSL latent spaces, which synthetic speech violates. They test this by training a causal LSTM next-frame predictor on bonafide speech using Wav2Vec2-Large-AntiDeepfake features and comparing it to a static global-average-pooling baseline, then adding a supervised Stage 2 MLP on frozen LSTM states to assess the role of spoof supervision. Their system attains competitive or SOTA results on six deepfake benchmarks, with best published EER on ASVspoof 2021 (0.75%) and a bonafide-only Stage 1 surpassing a supervised baseline on DE2024, while trajectory dynamics yield substantial gains particularly on cross-corpus settings with diverse synthesis methods.",
+          "why_it_matters": "It shows that modeling latent trajectory dynamics\u2014rather than utterance-level statistics\u2014adds robust, cross-corpus detection signal, aligning with interests in temporal inductive biases for LLM/sequence model security.",
+          "score": 8.0,
+          "reason": "Live, evolving benchmark for agentic time-series analysis maps closely to time-series foundation models, agentic workflows, and evaluation methodology for temporal validity.",
           "slot": "relevance",
           "sections": [
             "tsfm",
-            "efficiency",
-            "has-code"
-          ]
-        },
-        {
-          "title": "verdi: retrieval is not transfer for continual world model optimization",
-          "url": "http://arxiv.org/abs/2608.09537v1",
-          "summary": "The paper argues that retrieval is not transfer in optimizing pretrained world models: strategies validated on one model are only hypotheses for another and require target-side experimental validation. It introduces VERDI, a continual evidence-licensed optimization framework that builds Optimization Fingerprints via shared inference-time probes, retrieves prior strategies as ranked hypotheses, and validates them with a frozen target-side verifier while evolving probes when contradictions arise. Experiments on Ctrl-World, Cosmos, and RoboCoin report reduced search (68%), GPU cost (69%), negative transfer (0.34\u21920.06), and 83% sign accuracy in predicting transfer outcomes.",
-          "why_it_matters": "Offers a principled, verifier-gated alternative to recipe-style transfer for model optimization, aligning with secure/evidence-based LLM and time-series/world-model tuning where negative transfer and brittle heuristics are major pain points.",
-          "score": 7.0,
-          "reason": "Argues that retrieved strategies don't directly transfer for optimizing world models and proposes safeguarding transfer\u2014relevant to continual optimization of foundation world/time-series models and efficient automated optimization agents.",
-          "slot": "relevance",
-          "sections": [
             "agents",
-            "tsfm",
-            "evaluation",
-            "efficiency"
+            "evaluation"
           ]
         }
       ],
@@ -1161,6 +1146,20 @@
           ]
         },
         {
+          "title": "ProbGuard: Calibrated Safety Risk Estimation from LLM Output Distributions",
+          "url": "http://arxiv.org/abs/2608.10621v1",
+          "summary": "ProbGuard reframes LLM safety assessment as probabilistic risk estimation over the model\u2019s early output distribution rather than deterministic classification on completed token sequences. It estimates the probability of unsafe continuation via Monte Carlo over generated prefix distributions and calibrates this risk through post-training, enabling early stopping of unsafe generations. Empirically, it achieves the best calibration across nine model\u2013dataset settings (average Brier and ECE reduced by 79.6% and 71.9% vs. the best baseline) and caps jailbreak attack success to \u22641% after only the first ten decoding steps.",
+          "why_it_matters": "It operationalizes distribution-aware, early-stage safety control with strong calibration\u2014useful for red-teaming defenses, risk-sensitive deployment, and aligning with probabilistic guardrail research and time-series-style forecasting over generation trajectories.",
+          "score": 6.0,
+          "reason": "Proposes a novel metric (feature nonlocality) to assess abstraction level of learned features from sparse autoencoders; useful for mechanistic interpretability and evaluating claims about high-level features relevant to jailbreak/mechanistic work.",
+          "slot": "relevance",
+          "sections": [
+            "alignment",
+            "adversarial-ml",
+            "evaluation"
+          ]
+        },
+        {
           "title": "Align-RAG: Alignment Is All You Need for TSFM In-Context Learning",
           "url": "http://arxiv.org/abs/2608.05571v1",
           "summary": "The paper introduces Align-RAG, a training-free method that applies closed-form amplitude rescaling and integer-lag phase alignment to retrieved past\u2013future windows before feeding them to a frozen TSFM. On a frozen Chronos-Bolt, it outperforms a state-of-the-art trained retrieval adapter across seven benchmark datasets (average \u22123.75% MSE), and it also improves zero-shot MSE by 2.5%\u201313.7% on four additional frozen TSFMs without per-backbone tuning. Analysis shows aligned demonstrations induce prediction shifts in frozen backbones that track a closed-form ridge predictor on the same pairs, with a future-shuffle control ruling out futures-averaging, suggesting frozen TSFMs already support dynamic in-context use of retrievals.",
@@ -1170,20 +1169,6 @@
           "slot": "relevance",
           "sections": [
             "llm-security",
-            "alignment",
-            "evaluation",
-            "agents"
-          ]
-        },
-        {
-          "title": "Beyond Solvability: Task Learnability as a Static Prior for LLM RL Post-Training",
-          "url": "http://arxiv.org/abs/2608.09217v1",
-          "summary": "The paper introduces task learnability as a regime-conditional measure capturing how much tasks are expected to improve under a fixed LLM RL post-training setup, beyond snapshot solvability. They show learnability is reproducible across training contexts, predictive of downstream utility, and propose TrajVal, a probe-based estimator using a short probe run and two endpoint evaluations to approximate per-task learnability pre-training. TrajVal serves as a static prior for task sampling or as a multiplicative prior with online schedulers, improving data efficiency on math and logic benchmarks across model scales.",
-          "why_it_matters": "Offers a practical, pre-training prior for task selection in RL post-training that complements online schedulers, improving compute allocation for reasoning tasks.",
-          "score": 6.0,
-          "reason": "Proposes task learnability as a static prior to improve RL post-training sampling\u2014relevant to efficient RLHF/RL fine-tuning and evaluation of curricula for eliciting reasoning in LLMs (methodology applicable to red-teaming and costly post-training regimes).",
-          "slot": "relevance",
-          "sections": [
             "alignment",
             "evaluation",
             "agents"
@@ -1225,20 +1210,6 @@
           ]
         },
         {
-          "title": "When Experience Becomes Instruction: Trajectory Poisoning in Self-Evolving Agent Skill Systems",
-          "url": "http://arxiv.org/abs/2608.05563v1",
-          "summary": "The paper introduces PoisonedEvolution, a trajectory-poisoning attack on self-evolving skill (SES) systems that distill agent trajectories into persistent skills, where an attacker with skill-level black-box access contributes bounded evidence to influence skill promotion. It formalizes artifact poisoning as requiring Inclusion, Evolution Attribution, and Realization, identifying Attribution\u2014making target behaviors appear causally useful, recurrent, and generalizable\u2014as the key bottleneck, and demonstrates high success embedding target behaviors across six LLM evolvers in SkillClaw (91.0% SER) and transfer to Trace2Skill (61.5% SER) at 10% attacker support. Controlled studies show three consistent attacker records in a 30-record batch suffice while one is much weaker, and ablations highlight recurring support, causal framing, and domain-aligned encoding as main success factors, framing evidence promotion as a critical security boundary for self-evolving agents.",
-          "why_it_matters": "It pinpoints the promotion/attribution step in skill evolution as an attack surface with quantified vulnerability and transferable effects, informing defenses for agentic LLMs and data-driven skill distillation pipelines.",
-          "score": 8.0,
-          "reason": "Robust context-aware segmentation for malicious instructions (IPI) targets detection of embedded prompt injections tailored to a query\u2014highly relevant to defending agents and evaluating instruction-level attacks.",
-          "slot": "relevance",
-          "sections": [
-            "llm-security",
-            "evaluation",
-            "agents"
-          ]
-        },
-        {
           "title": "Agent Against Agent: An Agentic System for Automatic Prompt Injection Red Teaming",
           "url": "http://arxiv.org/abs/2608.05108v1",
           "summary": "The paper proposes PIMiner, an agentic red-teaming system for prompt injection that trains over sequences of (dataset, target model) pairs to build a strategy library from scratch. At test time, it transfers this library to unseen target LLMs without additional training and uses only a small number of target-agent queries per sample (e.g., 10). Experiments show strong ASR on IPIArena (76.2% Gemini-2.5-Pro, 61.9% GPT-5.1, 42.9% Claude-Sonnet-4.5) and AgentDojo (86.7% Gemini-2.5-Pro, 53.3% GPT-5.1, 40.0% Claude-Sonnet-4.5), outperforming RL-based approaches that generalize poorly.",
@@ -1265,6 +1236,20 @@
             "longform",
             "evaluation"
           ]
+        },
+        {
+          "title": "HarnessSafe: Evaluating Safety Across Persistent Carriers in Agent Harnesses",
+          "url": "http://arxiv.org/abs/2608.06984v1",
+          "summary": "The paper introduces HarnessSafe, a benchmark of 328 executable cases spanning seven persistent-carrier families to assess delayed safety risks in agent harnesses that persist state across tasks and sessions. Each case is defined as a Persistent-Risk Lifecycle that traces attacker influence from entry through cross-carrier persistence to a benign trigger and an observable violation, and a multi-stage, trace-based evaluation measures how far each attack progresses and where it is stopped. Experiments indicate containment is carrier-specific and depends strongly on the harness-model configuration, with both harness and model shaping outcomes and attack success rates failing to capture lifecycle progression patterns.",
+          "why_it_matters": "It offers a carrier-aware, trace-based methodology and dataset to dissect how safety risks propagate across memory/tools/skills in agentic systems\u2014complementing coarse success-rate metrics and informing defense design in LLM agents and persistent pipelines.",
+          "score": 9.0,
+          "reason": "Benchmarks delayed safety risks from persistent carriers in agent harnesses; directly targets attack surfaces (memory, tools, skills), evaluation methodology, and end-to-end exploit propagation \u2014 highly relevant to LLM security and agentic threat models.",
+          "slot": "relevance",
+          "sections": [
+            "llm-security",
+            "evaluation",
+            "agents"
+          ]
         }
       ],
       "unavailable_reason": null
@@ -1288,17 +1273,17 @@
           ]
         },
         {
-          "title": "Learning with Bilevel-Minimax Optimization for Efficient and Reliable Transfer Attacks",
-          "url": "http://arxiv.org/abs/2608.11815v1",
-          "summary": "The paper reframes transfer-based adversarial attacks as a bilevel-minimax problem, modeling the coupling among initialization, surrogate adaptation, and gradient-based perturbation optimization. It introduces BMAT, which uses a Soft Weight Modulator and an Implicit Gradient Approximator to enable ternary coupling and improve cross-architecture generalization, with accompanying theoretical analysis of the optimization dynamics. Experiments on classification and segmentation show BMAT outperforms 10+ baselines across 30+ victim models and can halve mIoU, with code released at the provided repository.",
-          "why_it_matters": "Offers a principled bilevel-minimax view and practical solver that materially improves black-box transferability, relevant to robust LLM jailbreak defenses and cross-architecture time-series model attacks/defenses.",
-          "score": 6.0,
-          "reason": "Analyzes geometry of rollout RL for LLMs and proposes diagnostics/constraints \u2014 relevant to post\u2011training stability of LLM agents and rollout-based fine\u2011tuning used in safety work.",
+          "title": "Evaluating Agentic Learning Harness Capabilities Without Labels via the Scaling Hypothesis",
+          "url": "http://arxiv.org/abs/2608.13608v1",
+          "summary": "The paper proposes an unlabeled evaluation framework for agentic continual learning harnesses, leveraging the scaling hypothesis by using a stronger teacher to provide sparse corrections to a smaller student. Harness quality is scored by the student\u2019s convergence toward the teacher, and across security tasks, model families, and harness designs, teacher-relative lift correlates with improvement against a held-out gold standard. They also find LLM-as-a-judge between similarly powered models provides no usable signal and suggest the same harness can improve a teacher-sized model when humans provide sparse, high-precision corrections.",
+          "why_it_matters": "Offers a practical, label-free metric for assessing retrieval/memory harnesses in operational security settings and aligns with scaling-based evaluation strategies familiar from LLM distillation and RLHF work.",
+          "score": 9.0,
+          "reason": "Directly about retrieval-augmented methods for extended forecasting with pretrained time-series models \u2014 core interest in TSFM, efficient adaptation alternatives to fine-tuning.",
           "slot": "relevance",
           "sections": [
-            "agents",
-            "alignment",
-            "efficiency"
+            "tsfm",
+            "efficiency",
+            "has-code"
           ]
         },
         {
@@ -1399,33 +1384,6 @@
       "description": "New model weights or major model announcements from labs.",
       "items": [
         {
-          "title": "ActBench: Self-Evolving Benchmark of Behavioral Safety in Cowork Agents",
-          "url": "http://arxiv.org/abs/2608.09476v1",
-          "summary": "The paper defines behavioral safety for cowork agents and presents ActBench, a self-evolving benchmark that evaluates behavior risk from execution trajectories via paired benign/adversarial cases with task-reachable payloads. It introduces a reward-guided beam search with reflection to optimize attack effectiveness and task utility, and a dual evidence verification mechanism using logs and LLM-based trajectory evidence to assess safety and utility. Evaluating 15 LLMs and 6 cowork agents over 24,000 trajectories, they report attack success rates varying 10.1%\u201394.4% across models under a fixed harness and 73.7%\u201394.4% across agents under a fixed base model, with higher variation across models and high attack success across harnesses.",
-          "why_it_matters": "Gives a trajectory-centric, evolving benchmark and attack/verification tools to stress-test and compare LLM-based agents\u2019 behavioral safety across APIs and execution spaces\u2014useful for red-teaming, agent tuning, and safety eval pipelines.",
-          "score": 4.0,
-          "reason": "Diffusion model merging backdoor mitigation is solid adversarial-ML work but targets generative image models rather than LLMs or time-series models\u2014peripheral relevance for methodology.",
-          "slot": "relevance",
-          "sections": [
-            "adversarial-ml",
-            "model-releases"
-          ]
-        },
-        {
-          "title": "Telemetry and Concealment in Self-Adapting Generative AI: Logging Architecture, Adversarial Model Hiding, and the Limits of Detection",
-          "url": "http://arxiv.org/abs/2608.09069v1",
-          "summary": "The paper addresses governance for self-updating generative models by proposing a telemetry architecture that operates in discrete and continuous time, including a Minimal Sufficient Statistic for audits, a Merkle-chain for discrete weight sequences, an Ito-based continuous-time generalization, and KL divergence stopping-time logging. It then formalizes the Model Hiding Problem under adversarial providers and catalogs six attack strategies against the telemetry architecture across discrete and continuous time, providing a countermeasure for each. The result is a dual-regime approach where continuous telemetry narrows but cannot replace periodic invasive audits, aligning with traditional MRM pillars and remaining architecture-agnostic.",
-          "why_it_matters": "It offers concrete telemetry and adversarial-resilience mechanisms directly applicable to secure deployment and monitoring of self-adapting LLMs and time-series models where online weight updates break standard validation.",
-          "score": 9.0,
-          "reason": "Directly addresses governance and detection challenges for self-adapting generative models, including telemetry and concealment\u2014highly relevant to security, operational risk, and monitoring of adaptive LLMs.",
-          "slot": "relevance",
-          "sections": [
-            "policy",
-            "llm-security",
-            "model-releases"
-          ]
-        },
-        {
           "title": "Gradient Immunity: Null-Space Resistance to Malicious Fine-Tuning",
           "url": "http://arxiv.org/abs/2608.05045v1",
           "summary": "The paper targets the PPOW setting where most weights are trainable but a small safety-critical component is preserved, and proposes a Unidirectional Safety Gate implemented as a Null Space Cubic Layer plus an Inverse Adapter after the final Transformer layer. The cubic layer blocks or suppresses gradients from harmful samples whose hidden states lie within a calibrated protected region (threshold set using defender-held harmful data), while the Inverse Adapter restores the base model\u2019s forward behavior. Across six model\u2013dataset settings, this keeps post-finetuning attack success near pre-release levels under a fixed threshold, maintains high safe-pass on easier settings, and shows a clearer safety\u2013utility trade-off on BeaverTails unsafe samples, indicating release-time representation-space blocking can raise the cost of malicious adaptation without downstream cooperation.",
@@ -1453,6 +1411,33 @@
             "model-releases",
             "has-code"
           ]
+        },
+        {
+          "title": "Measure, Don't Optimize: Forecasting Recovery in LLM Unlearning",
+          "url": "http://arxiv.org/abs/2608.11408v1",
+          "summary": "The paper introduces J-Access, an inference-time audit that projects intermediate representations into vocabulary space to measure how often target concepts remain accessible along the output pathway, hypothesizing that residual accessibility predicts recovery susceptibility. Auditing 398 public unlearned models across eight methods, they find most retain accessibility above a retain-only gold level, pre-attack accessibility predicts recovery speed and extent at the model level (but not per-fact), and directly minimizing J-Access causes the model to hide knowledge from the audit while increasing post-attack recovery. They conclude J-Access is useful as a model-level diagnostic for residual susceptibility and caution against turning internal audits into optimization targets without validation.",
+          "why_it_matters": "Offers an actionable, model-level risk signal for unlearning robustness and a clear warning about Goodharting internal audits\u2014relevant for designing secure unlearning and audit pipelines in LLMs.",
+          "score": 7.0,
+          "reason": "Investigates latent recovery after LLM unlearning with an audit (J\u2011Access) \u2014 important for data\u2011removal/extraction risk monitoring and evaluation methodology.",
+          "slot": "relevance",
+          "sections": [
+            "llm-security",
+            "evaluation",
+            "model-releases"
+          ]
+        },
+        {
+          "title": "ActBench: Self-Evolving Benchmark of Behavioral Safety in Cowork Agents",
+          "url": "http://arxiv.org/abs/2608.09476v1",
+          "summary": "The paper defines behavioral safety for cowork agents and presents ActBench, a self-evolving benchmark that evaluates behavior risk from execution trajectories via paired benign/adversarial cases with task-reachable payloads. It introduces a reward-guided beam search with reflection to optimize attack effectiveness and task utility, and a dual evidence verification mechanism using logs and LLM-based trajectory evidence to assess safety and utility. Evaluating 15 LLMs and 6 cowork agents over 24,000 trajectories, they report attack success rates varying 10.1%\u201394.4% across models under a fixed harness and 73.7%\u201394.4% across agents under a fixed base model, with higher variation across models and high attack success across harnesses.",
+          "why_it_matters": "Gives a trajectory-centric, evolving benchmark and attack/verification tools to stress-test and compare LLM-based agents\u2019 behavioral safety across APIs and execution spaces\u2014useful for red-teaming, agent tuning, and safety eval pipelines.",
+          "score": 4.0,
+          "reason": "Diffusion model merging backdoor mitigation is solid adversarial-ML work but targets generative image models rather than LLMs or time-series models\u2014peripheral relevance for methodology.",
+          "slot": "relevance",
+          "sections": [
+            "adversarial-ml",
+            "model-releases"
+          ]
         }
       ],
       "unavailable_reason": null
@@ -1461,35 +1446,6 @@
       "group": "ecosystem",
       "description": "AI policy, regulation, governance, export controls.",
       "items": [
-        {
-          "title": "Telemetry and Concealment in Self-Adapting Generative AI: Logging Architecture, Adversarial Model Hiding, and the Limits of Detection",
-          "url": "http://arxiv.org/abs/2608.09069v1",
-          "summary": "The paper addresses governance for self-updating generative models by proposing a telemetry architecture that operates in discrete and continuous time, including a Minimal Sufficient Statistic for audits, a Merkle-chain for discrete weight sequences, an Ito-based continuous-time generalization, and KL divergence stopping-time logging. It then formalizes the Model Hiding Problem under adversarial providers and catalogs six attack strategies against the telemetry architecture across discrete and continuous time, providing a countermeasure for each. The result is a dual-regime approach where continuous telemetry narrows but cannot replace periodic invasive audits, aligning with traditional MRM pillars and remaining architecture-agnostic.",
-          "why_it_matters": "It offers concrete telemetry and adversarial-resilience mechanisms directly applicable to secure deployment and monitoring of self-adapting LLMs and time-series models where online weight updates break standard validation.",
-          "score": 9.0,
-          "reason": "Directly addresses governance and detection challenges for self-adapting generative models, including telemetry and concealment\u2014highly relevant to security, operational risk, and monitoring of adaptive LLMs.",
-          "slot": "relevance",
-          "sections": [
-            "policy",
-            "llm-security",
-            "model-releases"
-          ]
-        },
-        {
-          "title": "DiffSafeMerge: Mitigating Backdoor Inheritance in Diffusion Model Merging",
-          "url": "http://arxiv.org/abs/2608.09445v1",
-          "summary": "The paper highlights that merging diffusion checkpoints can inherit dormant backdoors from compromised public sources while maintaining normal-looking generations, and mitigating this is hard without knowing the attacker specifics or sacrificing quality. It proposes DiffSafeMerge, which uses a small unlabeled clean set and fixed attack-agnostic stress probes to score source blocks, attenuate suspicious contributions toward a trusted reference, and choose attenuation under a clean denoising-loss budget. Evaluated across four attacks, two datasets, and 21 targets, DSM preserves zero worst-target ASR where intended merging already had it, eliminates remaining matches over three seeds even when baseline ASR was 48\u2013100%, and among methods with zero worst-target ASR on both datasets achieves the lowest case-averaged FID in the seed-0 comparison.",
-          "why_it_matters": "Backdoor-safe merging for diffusion checkpoints parallels secure model composition in LLMs and offers a practical, attack-agnostic mitigation strategy that balances safety with generative quality.",
-          "score": 8.0,
-          "reason": "Telemetry and concealment for self-adapting generative AI addresses governance and detection limits for models that modify themselves in production\u2014important for model-risk management, attack concealment, and detection strategies.",
-          "slot": "relevance",
-          "sections": [
-            "policy",
-            "llm-security",
-            "adversarial-ml",
-            "evaluation"
-          ]
-        },
         {
           "title": "Capability-Routed Guard: Defending Large Reasoning Models Against Reasoning-Centric Jailbreaks",
           "url": "http://arxiv.org/abs/2608.07892v1",
@@ -1502,6 +1458,20 @@
             "evaluation",
             "policy",
             "longform"
+          ]
+        },
+        {
+          "title": "A Four-Axis Trustworthiness Benchmark for LLM-as-Judge in Principle-Based Regulation",
+          "url": "http://arxiv.org/abs/2608.14329v1",
+          "summary": "The paper argues LLM-as-judge for principle-based regulation must be evaluated on four axes: accuracy, paraphrase robustness, adversarial robustness, and calibration, and releases Principle-Bench with 168 FCA-aligned crypto promotion scenarios including paraphrase, keyword-stuffing, and boundary perturbations. It introduces Ceca, a calibrated, auditable assessor emitting per-exemplar counterfactual attributions, and evaluates keyword counting, three sentence-transformer embedders, an open-weight LLM-judge, and a calibrated cascade. Results show no method dominates all axes; a strong 120B judge drops from 0.74 to 0.27 accuracy under keyword-stuffed Consumer Duty inputs and another family\u2019s judge agrees at \u03ba=0.16 on that split, underscoring model-specific failures and the need for per-principle adversarial deception reporting and post-hoc calibration alongside aggregate accuracy.",
+          "why_it_matters": "Offers a concrete, multi-axis benchmark and calibrated assessment method to stress-test LLM judges against paraphrase and adversarial distribution shifts\u2014directly relevant to eval robustness and model governance in safety-critical LLM deployments.",
+          "score": 6.0,
+          "reason": "LLM-as-judge reliability and adversarial robustness directly relevant to evaluation methodology and guardrail assessment; crypto-financial focus slightly less aligned with core security/time-series interests.",
+          "slot": "relevance",
+          "sections": [
+            "evaluation",
+            "policy",
+            "llm-security"
           ]
         }
       ],
@@ -1555,16 +1525,16 @@
           ]
         },
         {
-          "title": "PolicyKG: An Agentic LLM Pipeline for Translating Institutional Policies into SHACL Knowledge Graphs",
-          "url": "http://arxiv.org/abs/2608.09028v1",
-          "summary": "PolicyKG is an agentic LLM pipeline that converts policy PDFs into SHACL via deontic sentence classification, FOL lifting, and a LangGraph workflow with validators, centered on a YAML Corpus Adapter that grounds predicates to a target ontology. On the AIT Policies and Procedures corpus, it reports 86.9% deontic classification accuracy (\u03ba=.709), SHACL F1=.866 on 69 shapes, 79.2% FOL coverage with the remainder using NL-to-SHACL fallback, and an audit placing the upper 95% bound on higher-order logic usage at 0.67%. Domain retargeting via registry swap improves GDPR property alignment (1/15\u219211/15; Fisher p<.001; h=1.53), but macro F1 drops to .370 on LexDeMod due to vocabulary mismatch, while outputs are hash-identical across runs.",
-          "why_it_matters": "Demonstrates a practical, auditable NL\u2192FOL\u2192SHACL pipeline with ontology-grounding and run determinism, highlighting domain shift/vocab grounding issues relevant to secure LLM agents and robust constraint generation.",
-          "score": 4.0,
-          "reason": "Practical pipeline for translating policies into formal constraints using LLMs and validators touches agentic system tooling and automated compliance verification, useful for governance/evaluation of agent behavior.",
+          "title": "Intern-S2-Preview: Scientific Agentic Foundation Model",
+          "url": "http://arxiv.org/abs/2608.13505v1",
+          "summary": "Intern-S2-Preview introduces scientific agentic foundation models trained via multimodal pretraining on rendered scientific documents, interleaved image-text, and diverse scientific corpora, followed by a unified post-training stack of SFT, scalable multi-task RL, black- and white-box agentic RL, and on-policy distillation. The pipeline adds practical rollout/training techniques\u2014partial rollout with off-policy correction, adaptive length regularization, online speculative decoding, robust multi-task optimization, and trace-aware experience assembly\u2014and explores architecture-level extensions: a 397B model with time series modules for efficient long-sequence understanding and numerical forecasting, plus a separate Memory Decoder path for rapid specialization without changing the frozen backbone. Evaluations report competitive or leading results across scientific, multimodal, agentic, and general-purpose benchmarks, with time-series gains on SciTS and a MemDec-4B extension improving Biology-Instructions average from 56.92 to 60.32 without modifying the 397B backbone.",
+          "why_it_matters": "Brings a concrete agentic RL + multimodal + TS forecasting stack with stability tricks and a memory-augmented specialization path relevant to secure tool-use agents and time-series LLMs.",
+          "score": 6.0,
+          "reason": "Agentic multimodal scientific foundation model work intersects with agentic-system attack surfaces and long-horizon reasoning, relevant for security analysis though not focused on adversarial robustness.",
           "slot": "relevance",
           "sections": [
             "agents",
-            "evaluation",
+            "tsfm",
             "longform"
           ]
         }
@@ -1656,6 +1626,19 @@
   "archive": {
     "llm-security": [
       {
+        "title": "Matryoshka Language Model Suites",
+        "url": "http://arxiv.org/abs/2608.09703v1",
+        "summary": "The paper introduces a Matryoshka training framework that nests sub-models of increasing size into one end-to-end trained architecture, reducing total suite parameters and enabling step-wise distillation from the largest to all smaller sub-models. This structure is well-suited for speculative decoding because the draft model is contained within the verifier. A 500M/1.5B/3B suite matches independently trained baselines on benchmarks and perplexities while using 36% less training compute and yielding 14\u201326% higher speculative decoding throughput, with ablations provided on architectural choices.",
+        "why_it_matters": "It offers a practical path to multi-size LLM suites that cut training/inference cost and improve speculative decoding, directly relevant to secure, efficient deployment pipelines and scalable time-series/LLM hybrid stacks.",
+        "score": 9.0,
+        "reason": "Direct audit showing internal harmfulness scores can anti-rank successful jailbreaks\u2014highly relevant to guardrail evaluation, false-positive budgeting, and deployment filtering.",
+        "slot": "relevance",
+        "sections": [
+          "llm-security",
+          "evaluation"
+        ]
+      },
+      {
         "title": "Toward Metacognitive One-Shot Indirect Prompt Injection: Strategy Abstraction Via Outcome-Conditioned Reflection",
         "url": "http://arxiv.org/abs/2608.08795v1",
         "summary": "The paper introduces SAVOR, a one-shot IPI attack framework that moves adaptation offline via outcome-conditioned reflection over successful and failed trajectories from disjoint training environments, consolidating validated, context-conditioned strategies into a reusable strategy memory. At test time, the frozen memory generates a single payload per unseen target without iterative interaction or feedback, achieving the highest average attack success rate across two benchmarks and three victim models. On Agent Security Bench and the new executable OpenClaw-IPI, SAVOR outperforms the strongest prior attack by 2.5\u201311.8 points and beats the same injection channel without strategy learning by 23.1 and 28.6 points respectively, with learned memory transferring across defenses.",
@@ -1683,20 +1666,6 @@
           "agents",
           "evaluation",
           "longform"
-        ]
-      },
-      {
-        "title": "Telemetry and Concealment in Self-Adapting Generative AI: Logging Architecture, Adversarial Model Hiding, and the Limits of Detection",
-        "url": "http://arxiv.org/abs/2608.09069v1",
-        "summary": "The paper addresses governance for self-updating generative models by proposing a telemetry architecture that operates in discrete and continuous time, including a Minimal Sufficient Statistic for audits, a Merkle-chain for discrete weight sequences, an Ito-based continuous-time generalization, and KL divergence stopping-time logging. It then formalizes the Model Hiding Problem under adversarial providers and catalogs six attack strategies against the telemetry architecture across discrete and continuous time, providing a countermeasure for each. The result is a dual-regime approach where continuous telemetry narrows but cannot replace periodic invasive audits, aligning with traditional MRM pillars and remaining architecture-agnostic.",
-        "why_it_matters": "It offers concrete telemetry and adversarial-resilience mechanisms directly applicable to secure deployment and monitoring of self-adapting LLMs and time-series models where online weight updates break standard validation.",
-        "score": 9.0,
-        "reason": "Directly addresses governance and detection challenges for self-adapting generative models, including telemetry and concealment\u2014highly relevant to security, operational risk, and monitoring of adaptive LLMs.",
-        "slot": "relevance",
-        "sections": [
-          "policy",
-          "llm-security",
-          "model-releases"
         ]
       },
       {
@@ -1743,6 +1712,20 @@
         ]
       },
       {
+        "title": "MazeRunner: Nonlinear Task and Clue Orchestration for LLM-driven Black-Box Automated Penetration Testing",
+        "url": "http://arxiv.org/abs/2608.14216v1",
+        "summary": "MazeRunner introduces a three-agent orchestration framework for autonomous black-box penetration testing that separates global orchestration, context-intensive execution, and failure-oriented review while persistently tracking task states and evidence. Designed to handle nonlinear attack graphs with ambiguous failures and long-horizon clues, it enables action revision, prerequisite recovery, branch switching, and long-range clue correlation. On 10 HTB targets with a 20M-token cap and leakage controls, MazeRunner (Claude Sonnet 4.5) completes 47.7% of annotated subtasks and achieves user-level or higher access on six targets (root on two), outperforming PentestGPT-V2 and Claude Code baselines that reach user-level access on only two and never root.",
+        "why_it_matters": "Demonstrates a concrete orchestration pattern and evaluation showing improved branch exploration and shell acquisition under strict budget/leakage controls, relevant to secure LLM agent design and planning for nonlinear, long-horizon tasks.",
+        "score": 9.0,
+        "reason": "Automated black-box penetration testing with LLM agents targets tooling, exploration failures, and realistic nonlinear attack graphs\u2014highly relevant to LLM security and agentic attack surfaces.",
+        "slot": "relevance",
+        "sections": [
+          "agents",
+          "llm-security",
+          "evaluation"
+        ]
+      },
+      {
         "title": "Gradient Immunity: Null-Space Resistance to Malicious Fine-Tuning",
         "url": "http://arxiv.org/abs/2608.05045v1",
         "summary": "The paper targets the PPOW setting where most weights are trainable but a small safety-critical component is preserved, and proposes a Unidirectional Safety Gate implemented as a Null Space Cubic Layer plus an Inverse Adapter after the final Transformer layer. The cubic layer blocks or suppresses gradients from harmful samples whose hidden states lie within a calibrated protected region (threshold set using defender-held harmful data), while the Inverse Adapter restores the base model\u2019s forward behavior. Across six model\u2013dataset settings, this keeps post-finetuning attack success near pre-release levels under a fixed threshold, maintains high safe-pass on easier settings, and shows a clearer safety\u2013utility trade-off on BeaverTails unsafe samples, indicating release-time representation-space blocking can raise the cost of malicious adaptation without downstream cooperation.",
@@ -1769,20 +1752,6 @@
           "adversarial-ml",
           "evaluation",
           "watchlist"
-        ]
-      },
-      {
-        "title": "When Experience Becomes Instruction: Trajectory Poisoning in Self-Evolving Agent Skill Systems",
-        "url": "http://arxiv.org/abs/2608.05563v1",
-        "summary": "The paper introduces PoisonedEvolution, a trajectory-poisoning attack on self-evolving skill (SES) systems that distill agent trajectories into persistent skills, where an attacker with skill-level black-box access contributes bounded evidence to influence skill promotion. It formalizes artifact poisoning as requiring Inclusion, Evolution Attribution, and Realization, identifying Attribution\u2014making target behaviors appear causally useful, recurrent, and generalizable\u2014as the key bottleneck, and demonstrates high success embedding target behaviors across six LLM evolvers in SkillClaw (91.0% SER) and transfer to Trace2Skill (61.5% SER) at 10% attacker support. Controlled studies show three consistent attacker records in a 30-record batch suffice while one is much weaker, and ablations highlight recurring support, causal framing, and domain-aligned encoding as main success factors, framing evidence promotion as a critical security boundary for self-evolving agents.",
-        "why_it_matters": "It pinpoints the promotion/attribution step in skill evolution as an attack surface with quantified vulnerability and transferable effects, informing defenses for agentic LLMs and data-driven skill distillation pipelines.",
-        "score": 8.0,
-        "reason": "Robust context-aware segmentation for malicious instructions (IPI) targets detection of embedded prompt injections tailored to a query\u2014highly relevant to defending agents and evaluating instruction-level attacks.",
-        "slot": "relevance",
-        "sections": [
-          "llm-security",
-          "evaluation",
-          "agents"
         ]
       },
       {
@@ -1857,21 +1826,6 @@
         ]
       },
       {
-        "title": "DiffSafeMerge: Mitigating Backdoor Inheritance in Diffusion Model Merging",
-        "url": "http://arxiv.org/abs/2608.09445v1",
-        "summary": "The paper highlights that merging diffusion checkpoints can inherit dormant backdoors from compromised public sources while maintaining normal-looking generations, and mitigating this is hard without knowing the attacker specifics or sacrificing quality. It proposes DiffSafeMerge, which uses a small unlabeled clean set and fixed attack-agnostic stress probes to score source blocks, attenuate suspicious contributions toward a trusted reference, and choose attenuation under a clean denoising-loss budget. Evaluated across four attacks, two datasets, and 21 targets, DSM preserves zero worst-target ASR where intended merging already had it, eliminates remaining matches over three seeds even when baseline ASR was 48\u2013100%, and among methods with zero worst-target ASR on both datasets achieves the lowest case-averaged FID in the seed-0 comparison.",
-        "why_it_matters": "Backdoor-safe merging for diffusion checkpoints parallels secure model composition in LLMs and offers a practical, attack-agnostic mitigation strategy that balances safety with generative quality.",
-        "score": 8.0,
-        "reason": "Telemetry and concealment for self-adapting generative AI addresses governance and detection limits for models that modify themselves in production\u2014important for model-risk management, attack concealment, and detection strategies.",
-        "slot": "relevance",
-        "sections": [
-          "policy",
-          "llm-security",
-          "adversarial-ml",
-          "evaluation"
-        ]
-      },
-      {
         "title": "SkillsMetric: Mapping the Detection Boundary of Static Analysis for Malicious Agent Skills",
         "url": "http://arxiv.org/abs/2608.08468v1",
         "summary": "This work introduces SkillsMetric, a five-stage static analysis framework that scores LLM agent skills across pattern density, statistical anomaly, dataflow taint, import anomaly, and capability mismatch. Using an adversarial dataset of 2,266 skills covering 16 attack types and the SkillMD-138K corpus, it reports AUC 0.93 and 5-fold CV F1 73.4%\u00b10.5%, with 93% detection for data exfiltration and steganographic payloads. It also exposes blind spots\u20140% detection for host destruction via common shell commands and 42% for prompt injection\u2014arguing static analysis alone is insufficient and should be paired with semantic review in defense-in-depth.",
@@ -1883,20 +1837,6 @@
           "agents",
           "llm-security",
           "adversarial-ml"
-        ]
-      },
-      {
-        "title": "Persistent Semantic Entities in Tool-Augmented LLM Systems",
-        "url": "http://arxiv.org/abs/2608.07952v1",
-        "summary": "The paper formalizes Persistent Semantic Entities (PSEs) in tool-augmented LLM agents\u2014defined by name binding, event triggering, and cross-boundary propagation\u2014and shows all 24 tested models are susceptible, with name binding necessary and dominant (0% without it). Persistence depends on contamination type: preference contamination persists undegraded (100% at t=10), instruction contamination persists where adopted, persona injection partially decays (90%\u219210%), and factual injection varies by model (self-corrected on Llama-3.1-8B and GPT-4o-mini but not on Qwen2.5-coder variants). Context-isolated self-verification reduces contamination by 20\u201379% (median 36.5%) versus keyword detectors with systematic false positives, and contamination compounds 1.9\u00d7 through a four-stage agent pipeline (40%\u219275%), with preference/instruction contamination highlighted as a concerning attack surface.",
-        "why_it_matters": "Directly informs red-teaming and defenses for agentic LLMs by identifying name-binding-driven, cross-session contamination modes that persist, evade naive monitoring, and amplify in pipelines.",
-        "score": 8.0,
-        "reason": "Inference-time guard that routes capabilities to avoid reasoning-centric jailbreaks targets a new, practical jailbreak class and proposes model-agnostic mitigations relevant for deployment.",
-        "slot": "relevance",
-        "sections": [
-          "llm-security",
-          "agents",
-          "evaluation"
         ]
       },
       {
@@ -1949,6 +1889,20 @@
         "why_it_matters": "Gives a practical, retraining-free way to map which data sources steer pretraining trajectories over time, informing data curation, curriculum, and security-relevant provenance audits for LLMs.",
         "score": 8.0,
         "reason": "Proposes a task-agnostic measure of individual-example influence during LM pretraining which is highly relevant to data provenance, extraction/attribution, contamination, and training-time attack/defense analysis.",
+        "slot": "relevance",
+        "sections": [
+          "llm-security",
+          "adversarial-ml",
+          "evaluation"
+        ]
+      },
+      {
+        "title": "The More Popular, The Harder to Forget: Adaptive Popularity for LLM Unlearning",
+        "url": "http://arxiv.org/abs/2608.14229v1",
+        "summary": "The paper observes that popular facts are memorized more deeply in LLM pretraining and are harder to unlearn, while prior unlearning methods apply uniform gradient pressure regardless of frequency. It proposes AdaPop, which scales unlearning pressure using local token confidence and a per-fact popularity-dependent exponent from an external proxy, and uses a dual-ascent controller to automatically tune the retain penalty each epoch. On three model families and two benchmarks, AdaPop reduces leakage of forgotten content by ~5x on paraphrases and ~1.6x on adversarial reformulations, with internal metrics showing larger divergence from pre-unlearning states on the forget set and closer retention on the retain set compared to baselines.",
+        "why_it_matters": "Targets frequency-aware unlearning with automated retain/forget control, improving robustness to paraphrase/adversarial probes\u2014relevant for red-teaming, safety fine-tuning, and deployment-time data governance.",
+        "score": 8.0,
+        "reason": "Directly tackles unlearning/memorization\u2014a core LLM security concern (data extraction, forgetting) with a practical adaptive method and measured leakage improvements.",
         "slot": "relevance",
         "sections": [
           "llm-security",
@@ -2010,6 +1964,20 @@
           "llm-security",
           "evaluation",
           "model-releases"
+        ]
+      },
+      {
+        "title": "TimeSage-EV: A Live Benchmark for Agentic Time Series Analysis in Evolving Environments",
+        "url": "http://arxiv.org/abs/2608.14270v1",
+        "summary": "TimeSage-EV is a live benchmark for agentic time series analysis that evaluates temporal validity and cutoff-aware evidence use across 60 institutional scenarios and 1,485 scenario-period QA pairs from Feb 2023 to May 2026, spanning multiple release cadences. At each period, LLM agents receive time series data and source reports, with withheld target releases serving as ground truth, and are evaluated on state identification, data summarization, and outlook reasoning. Experiments with frontier LLM agents and TimeSage-1.0, a self-evolving agent with a reusable analytical skill library, show substantial performance gaps and recurring failures in temporal validity, exogenous context use, and adaptation, with monthly updates, code, a leaderboard, and failure-mode analyses released.",
+        "why_it_matters": "It offers a continuously updating, real-world benchmark to stress-test LLM agents\u2019 temporal grounding and adaptability\u2014key for secure, cutoff-aware forecasting and decision support in evolving time series contexts.",
+        "score": 7.0,
+        "reason": "Analysis of when agent skills fail informs robustness and harness design for agentic systems and red-teaming; valuable for understanding failure modes though somewhat broad.",
+        "slot": "relevance",
+        "sections": [
+          "agents",
+          "evaluation",
+          "llm-security"
         ]
       },
       {
@@ -2125,17 +2093,17 @@
         ]
       },
       {
-        "title": "Task- and dataset-specific information in protein language models",
-        "url": "http://arxiv.org/abs/2608.12090v1",
-        "summary": "Across 13 PLMs and 15 downstream tasks, intermediate-layer embeddings often outperform last-layer embeddings, contradicting the common practice of using the final layer. The layer at which task-relevant information concentrates depends on the task\u2013pretraining alignment and the dataset: residue-level tasks see information accumulate with depth, while whole-protein performance is dataset-driven, with DMS favoring shallow layers and diverse natural proteins favoring deeper layers. PLM performance degrades markedly on tasks involving artificial proteins.",
-        "why_it_matters": "Highlights layer- and dataset-specific representation selection, informing secure model probing, adversarial evaluation, and transfer strategies analogous to layerwise selection in LLMs and time-series FMs.",
+        "title": "A Four-Axis Trustworthiness Benchmark for LLM-as-Judge in Principle-Based Regulation",
+        "url": "http://arxiv.org/abs/2608.14329v1",
+        "summary": "The paper argues LLM-as-judge for principle-based regulation must be evaluated on four axes: accuracy, paraphrase robustness, adversarial robustness, and calibration, and releases Principle-Bench with 168 FCA-aligned crypto promotion scenarios including paraphrase, keyword-stuffing, and boundary perturbations. It introduces Ceca, a calibrated, auditable assessor emitting per-exemplar counterfactual attributions, and evaluates keyword counting, three sentence-transformer embedders, an open-weight LLM-judge, and a calibrated cascade. Results show no method dominates all axes; a strong 120B judge drops from 0.74 to 0.27 accuracy under keyword-stuffed Consumer Duty inputs and another family\u2019s judge agrees at \u03ba=0.16 on that split, underscoring model-specific failures and the need for per-principle adversarial deception reporting and post-hoc calibration alongside aggregate accuracy.",
+        "why_it_matters": "Offers a concrete, multi-axis benchmark and calibrated assessment method to stress-test LLM judges against paraphrase and adversarial distribution shifts\u2014directly relevant to eval robustness and model governance in safety-critical LLM deployments.",
         "score": 6.0,
-        "reason": "Bilevel\u2011minimax formulation for transfer attacks improves black\u2011box adversarial transferability \u2014 relevant for adversarial robustness and attack methodology informing LLM security.",
+        "reason": "LLM-as-judge reliability and adversarial robustness directly relevant to evaluation methodology and guardrail assessment; crypto-financial focus slightly less aligned with core security/time-series interests.",
         "slot": "relevance",
         "sections": [
-          "adversarial-ml",
-          "llm-security",
-          "evaluation"
+          "evaluation",
+          "policy",
+          "llm-security"
         ]
       },
       {
@@ -2227,21 +2195,6 @@
         ]
       },
       {
-        "title": "DiffSafeMerge: Mitigating Backdoor Inheritance in Diffusion Model Merging",
-        "url": "http://arxiv.org/abs/2608.09445v1",
-        "summary": "The paper highlights that merging diffusion checkpoints can inherit dormant backdoors from compromised public sources while maintaining normal-looking generations, and mitigating this is hard without knowing the attacker specifics or sacrificing quality. It proposes DiffSafeMerge, which uses a small unlabeled clean set and fixed attack-agnostic stress probes to score source blocks, attenuate suspicious contributions toward a trusted reference, and choose attenuation under a clean denoising-loss budget. Evaluated across four attacks, two datasets, and 21 targets, DSM preserves zero worst-target ASR where intended merging already had it, eliminates remaining matches over three seeds even when baseline ASR was 48\u2013100%, and among methods with zero worst-target ASR on both datasets achieves the lowest case-averaged FID in the seed-0 comparison.",
-        "why_it_matters": "Backdoor-safe merging for diffusion checkpoints parallels secure model composition in LLMs and offers a practical, attack-agnostic mitigation strategy that balances safety with generative quality.",
-        "score": 8.0,
-        "reason": "Telemetry and concealment for self-adapting generative AI addresses governance and detection limits for models that modify themselves in production\u2014important for model-risk management, attack concealment, and detection strategies.",
-        "slot": "relevance",
-        "sections": [
-          "policy",
-          "llm-security",
-          "adversarial-ml",
-          "evaluation"
-        ]
-      },
-      {
         "title": "SkillsMetric: Mapping the Detection Boundary of Static Analysis for Malicious Agent Skills",
         "url": "http://arxiv.org/abs/2608.08468v1",
         "summary": "This work introduces SkillsMetric, a five-stage static analysis framework that scores LLM agent skills across pattern density, statistical anomaly, dataflow taint, import anomaly, and capability mismatch. Using an adversarial dataset of 2,266 skills covering 16 attack types and the SkillMD-138K corpus, it reports AUC 0.93 and 5-fold CV F1 73.4%\u00b10.5%, with 93% detection for data exfiltration and steganographic payloads. It also exposes blind spots\u20140% detection for host destruction via common shell commands and 42% for prompt injection\u2014arguing static analysis alone is insufficient and should be paired with semantic review in defense-in-depth.",
@@ -2290,6 +2243,20 @@
         "why_it_matters": "Gives a practical, retraining-free way to map which data sources steer pretraining trajectories over time, informing data curation, curriculum, and security-relevant provenance audits for LLMs.",
         "score": 8.0,
         "reason": "Proposes a task-agnostic measure of individual-example influence during LM pretraining which is highly relevant to data provenance, extraction/attribution, contamination, and training-time attack/defense analysis.",
+        "slot": "relevance",
+        "sections": [
+          "llm-security",
+          "adversarial-ml",
+          "evaluation"
+        ]
+      },
+      {
+        "title": "The More Popular, The Harder to Forget: Adaptive Popularity for LLM Unlearning",
+        "url": "http://arxiv.org/abs/2608.14229v1",
+        "summary": "The paper observes that popular facts are memorized more deeply in LLM pretraining and are harder to unlearn, while prior unlearning methods apply uniform gradient pressure regardless of frequency. It proposes AdaPop, which scales unlearning pressure using local token confidence and a per-fact popularity-dependent exponent from an external proxy, and uses a dual-ascent controller to automatically tune the retain penalty each epoch. On three model families and two benchmarks, AdaPop reduces leakage of forgotten content by ~5x on paraphrases and ~1.6x on adversarial reformulations, with internal metrics showing larger divergence from pre-unlearning states on the forget set and closer retention on the retain set compared to baselines.",
+        "why_it_matters": "Targets frequency-aware unlearning with automated retain/forget control, improving robustness to paraphrase/adversarial probes\u2014relevant for red-teaming, safety fine-tuning, and deployment-time data governance.",
+        "score": 8.0,
+        "reason": "Directly tackles unlearning/memorization\u2014a core LLM security concern (data extraction, forgetting) with a practical adaptive method and measured leakage improvements.",
         "slot": "relevance",
         "sections": [
           "llm-security",
@@ -2366,20 +2333,6 @@
         ]
       },
       {
-        "title": "Task- and dataset-specific information in protein language models",
-        "url": "http://arxiv.org/abs/2608.12090v1",
-        "summary": "Across 13 PLMs and 15 downstream tasks, intermediate-layer embeddings often outperform last-layer embeddings, contradicting the common practice of using the final layer. The layer at which task-relevant information concentrates depends on the task\u2013pretraining alignment and the dataset: residue-level tasks see information accumulate with depth, while whole-protein performance is dataset-driven, with DMS favoring shallow layers and diverse natural proteins favoring deeper layers. PLM performance degrades markedly on tasks involving artificial proteins.",
-        "why_it_matters": "Highlights layer- and dataset-specific representation selection, informing secure model probing, adversarial evaluation, and transfer strategies analogous to layerwise selection in LLMs and time-series FMs.",
-        "score": 6.0,
-        "reason": "Bilevel\u2011minimax formulation for transfer attacks improves black\u2011box adversarial transferability \u2014 relevant for adversarial robustness and attack methodology informing LLM security.",
-        "slot": "relevance",
-        "sections": [
-          "adversarial-ml",
-          "llm-security",
-          "evaluation"
-        ]
-      },
-      {
         "title": "Analysis of Federated Aggregation under Model Poisoning and Backdoor Attacks: A Reconstructed Cross-Dataset and Cross-Architecture Benchmark",
         "url": "http://arxiv.org/abs/2608.11423v1",
         "summary": "This work reconstructs a 500-cell federated aggregation benchmark across five methods, five datasets, five architectures, and four conditions (clean, sign-flipping, Gaussian, BadNets), recovering 454 original runs and 36 repairs/reruns, with 10 SVHN cells covered only by summary provenance. Trimmed Mean has the best clean macro-mean accuracy and lowest mean within-task rank, while Krum shows the top recorded accuracy under sign-flipping and Gaussian, and these rankings persist when restricted to fully logged task pairs. Audits reveal the BadNets metric is actually TTLR (all test inputs triggered) and a FedPARETO pathway where reported predictive summaries may not match the corrupted updates used for aggregation, so results are descriptive within recorded configs rather than universal robustness claims.",
@@ -2448,6 +2401,35 @@
       }
     ],
     "tsfm": [
+      {
+        "title": "Personalized Federated Sparse Adaptation of Time-Series Foundation Models",
+        "url": "http://arxiv.org/abs/2608.04695v1",
+        "summary": "The paper proposes a personalized federated sparse adaptation framework for TSFMs in building energy forecasting, using a heterogeneous temporal MoE adapter placed after the pretrained representation and a sequence-level router that assigns each 168-hour window to top-k experts specialized for distinct temporal structures. It evaluates global FL, local training, and personalized FL variants with globally shared vs client-private expert banks across 50 buildings and three TSFM backbones. Results show personalization consistently outperforms Global FL-MoE and Local MoE, the best sparse-adaptation strategy depends on backbone and metric, and routing reveals client-level expert specialization, expert concentration, and near-uniform routing across backbones, implying adaptation should be client- and backbone-aware.",
+        "why_it_matters": "Combines federated personalization with sparse MoE routing for TSFMs under non-IID meter data, offering actionable design signals (client-/backbone-aware adapters) relevant to secure on-device adaptation and privacy-preserving deployment.",
+        "score": 7.0,
+        "reason": "Federated personalization for TS foundation models directly matches the reader's primary interest in TSFMs and on-device/private data adaptation; MoE adapter and sparse adaptation are relevant to architecture and efficient adaptation.",
+        "slot": "relevance",
+        "sections": [
+          "tsfm",
+          "efficiency",
+          "has-code"
+        ]
+      },
+      {
+        "title": "verdi: retrieval is not transfer for continual world model optimization",
+        "url": "http://arxiv.org/abs/2608.09537v1",
+        "summary": "The paper argues that retrieval is not transfer in optimizing pretrained world models: strategies validated on one model are only hypotheses for another and require target-side experimental validation. It introduces VERDI, a continual evidence-licensed optimization framework that builds Optimization Fingerprints via shared inference-time probes, retrieves prior strategies as ranked hypotheses, and validates them with a frozen target-side verifier while evolving probes when contradictions arise. Experiments on Ctrl-World, Cosmos, and RoboCoin report reduced search (68%), GPU cost (69%), negative transfer (0.34\u21920.06), and 83% sign accuracy in predicting transfer outcomes.",
+        "why_it_matters": "Offers a principled, verifier-gated alternative to recipe-style transfer for model optimization, aligning with secure/evidence-based LLM and time-series/world-model tuning where negative transfer and brittle heuristics are major pain points.",
+        "score": 7.0,
+        "reason": "Argues that retrieved strategies don't directly transfer for optimizing world models and proposes safeguarding transfer\u2014relevant to continual optimization of foundation world/time-series models and efficient automated optimization agents.",
+        "slot": "relevance",
+        "sections": [
+          "agents",
+          "tsfm",
+          "evaluation",
+          "efficiency"
+        ]
+      },
       {
         "title": "The Label Defines the Timescale: Trait-State Limits of Temporal-Aggregate Learning",
         "url": "http://arxiv.org/abs/2608.01587v1",
@@ -2518,20 +2500,6 @@
         ]
       },
       {
-        "title": "Taxonomy-Driven Analysis of Open-Source AI Risk Mitigation Tools",
-        "url": "http://arxiv.org/abs/2608.07446v1",
-        "summary": "The paper presents a taxonomy-driven protocol that uses an LLM-assisted RAG pipeline to map capabilities of 21 open-source LLM evaluation and security tools to 32 subcategories of the extended MIT AI Risk Mitigation and Response Taxonomy. The study finds a skewed tooling landscape concentrated on technical and operational controls, with major gaps in governance, legal/regulatory, and financial/market controls, and reports moderate inter-rater reliability (Fleiss\u2019 Kappa = 0.509) and an F1 score of 75.5% after majority voting. It proposes a layered risk-mitigation architecture that combines tool-based controls with organizational and regulatory processes and offers a practical mapping highlighting where human oversight is still needed.",
-        "why_it_matters": "Gives a concrete, reproducible mapping from OSS LLM security/eval tools to a recognized risk taxonomy, clarifying coverage gaps relevant to red teaming, guardrails, and trust pipelines for foundation models (including time-series variants).",
-        "score": 5.0,
-        "reason": "Using VLMs to encode time-series as images speaks to practical efficiency and cross-modal approaches for time-series analysis and could impact deployment/serving costs for TS workloads.",
-        "slot": "relevance",
-        "sections": [
-          "efficiency",
-          "tsfm",
-          "agents"
-        ]
-      },
-      {
         "title": "LabelFusion-TS: Fusing Large Language Models, Transformer Encoders, and Financial Time Series for Monetary-Policy Stance Classification",
         "url": "http://arxiv.org/abs/2608.11753v1",
         "summary": "The paper introduces LabelFusion-TS, which combines a fine-tuned RoBERTa encoder, a prompted LLM, and an ensemble of time-series transformers over pre-publication market series via a small voting network to classify FOMC sentences as hawkish, dovish, or neutral. Due to limited human labels (~1k sentences), the RoBERTa encoder is first pre-trained on LLM-generated weak labels and then fine-tuned on human annotations. Trained on data up to 2015 and evaluated on 2015\u20132022, the fused system attains 70.2% weighted F1, surpassing a zero-shot LLM at 64.1% and overtaking it with as few as 240 human-labeled sentences.",
@@ -2562,20 +2530,6 @@
     ],
     "alignment": [
       {
-        "title": "ProbGuard: Calibrated Safety Risk Estimation from LLM Output Distributions",
-        "url": "http://arxiv.org/abs/2608.10621v1",
-        "summary": "ProbGuard reframes LLM safety assessment as probabilistic risk estimation over the model\u2019s early output distribution rather than deterministic classification on completed token sequences. It estimates the probability of unsafe continuation via Monte Carlo over generated prefix distributions and calibrates this risk through post-training, enabling early stopping of unsafe generations. Empirically, it achieves the best calibration across nine model\u2013dataset settings (average Brier and ECE reduced by 79.6% and 71.9% vs. the best baseline) and caps jailbreak attack success to \u22641% after only the first ten decoding steps.",
-        "why_it_matters": "It operationalizes distribution-aware, early-stage safety control with strong calibration\u2014useful for red-teaming defenses, risk-sensitive deployment, and aligning with probabilistic guardrail research and time-series-style forecasting over generation trajectories.",
-        "score": 6.0,
-        "reason": "Proposes a novel metric (feature nonlocality) to assess abstraction level of learned features from sparse autoencoders; useful for mechanistic interpretability and evaluating claims about high-level features relevant to jailbreak/mechanistic work.",
-        "slot": "relevance",
-        "sections": [
-          "alignment",
-          "adversarial-ml",
-          "evaluation"
-        ]
-      },
-      {
         "title": "Learning with Bilevel-Minimax Optimization for Efficient and Reliable Transfer Attacks",
         "url": "http://arxiv.org/abs/2608.11815v1",
         "summary": "The paper reframes transfer-based adversarial attacks as a bilevel-minimax problem, modeling the coupling among initialization, surrogate adaptation, and gradient-based perturbation optimization. It introduces BMAT, which uses a Soft Weight Modulator and an Implicit Gradient Approximator to enable ternary coupling and improve cross-architecture generalization, with accompanying theoretical analysis of the optimization dynamics. Experiments on classification and segmentation show BMAT outperforms 10+ baselines across 30+ victim models and can halve mIoU, with code released at the provided repository.",
@@ -2591,20 +2545,6 @@
       }
     ],
     "agents": [
-      {
-        "title": "HarnessSafe: Evaluating Safety Across Persistent Carriers in Agent Harnesses",
-        "url": "http://arxiv.org/abs/2608.06984v1",
-        "summary": "The paper introduces HarnessSafe, a benchmark of 328 executable cases spanning seven persistent-carrier families to assess delayed safety risks in agent harnesses that persist state across tasks and sessions. Each case is defined as a Persistent-Risk Lifecycle that traces attacker influence from entry through cross-carrier persistence to a benign trigger and an observable violation, and a multi-stage, trace-based evaluation measures how far each attack progresses and where it is stopped. Experiments indicate containment is carrier-specific and depends strongly on the harness-model configuration, with both harness and model shaping outcomes and attack success rates failing to capture lifecycle progression patterns.",
-        "why_it_matters": "It offers a carrier-aware, trace-based methodology and dataset to dissect how safety risks propagate across memory/tools/skills in agentic systems\u2014complementing coarse success-rate metrics and informing defense design in LLM agents and persistent pipelines.",
-        "score": 9.0,
-        "reason": "Benchmarks delayed safety risks from persistent carriers in agent harnesses; directly targets attack surfaces (memory, tools, skills), evaluation methodology, and end-to-end exploit propagation \u2014 highly relevant to LLM security and agentic threat models.",
-        "slot": "relevance",
-        "sections": [
-          "llm-security",
-          "evaluation",
-          "agents"
-        ]
-      },
       {
         "title": "Toward Metacognitive One-Shot Indirect Prompt Injection: Strategy Abstraction Via Outcome-Conditioned Reflection",
         "url": "http://arxiv.org/abs/2608.08795v1",
@@ -2679,6 +2619,34 @@
         ]
       },
       {
+        "title": "MazeRunner: Nonlinear Task and Clue Orchestration for LLM-driven Black-Box Automated Penetration Testing",
+        "url": "http://arxiv.org/abs/2608.14216v1",
+        "summary": "MazeRunner introduces a three-agent orchestration framework for autonomous black-box penetration testing that separates global orchestration, context-intensive execution, and failure-oriented review while persistently tracking task states and evidence. Designed to handle nonlinear attack graphs with ambiguous failures and long-horizon clues, it enables action revision, prerequisite recovery, branch switching, and long-range clue correlation. On 10 HTB targets with a 20M-token cap and leakage controls, MazeRunner (Claude Sonnet 4.5) completes 47.7% of annotated subtasks and achieves user-level or higher access on six targets (root on two), outperforming PentestGPT-V2 and Claude Code baselines that reach user-level access on only two and never root.",
+        "why_it_matters": "Demonstrates a concrete orchestration pattern and evaluation showing improved branch exploration and shell acquisition under strict budget/leakage controls, relevant to secure LLM agent design and planning for nonlinear, long-horizon tasks.",
+        "score": 9.0,
+        "reason": "Automated black-box penetration testing with LLM agents targets tooling, exploration failures, and realistic nonlinear attack graphs\u2014highly relevant to LLM security and agentic attack surfaces.",
+        "slot": "relevance",
+        "sections": [
+          "agents",
+          "llm-security",
+          "evaluation"
+        ]
+      },
+      {
+        "title": "When Experience Becomes Instruction: Trajectory Poisoning in Self-Evolving Agent Skill Systems",
+        "url": "http://arxiv.org/abs/2608.05563v1",
+        "summary": "The paper introduces PoisonedEvolution, a trajectory-poisoning attack on self-evolving skill (SES) systems that distill agent trajectories into persistent skills, where an attacker with skill-level black-box access contributes bounded evidence to influence skill promotion. It formalizes artifact poisoning as requiring Inclusion, Evolution Attribution, and Realization, identifying Attribution\u2014making target behaviors appear causally useful, recurrent, and generalizable\u2014as the key bottleneck, and demonstrates high success embedding target behaviors across six LLM evolvers in SkillClaw (91.0% SER) and transfer to Trace2Skill (61.5% SER) at 10% attacker support. Controlled studies show three consistent attacker records in a 30-record batch suffice while one is much weaker, and ablations highlight recurring support, causal framing, and domain-aligned encoding as main success factors, framing evidence promotion as a critical security boundary for self-evolving agents.",
+        "why_it_matters": "It pinpoints the promotion/attribution step in skill evolution as an attack surface with quantified vulnerability and transferable effects, informing defenses for agentic LLMs and data-driven skill distillation pipelines.",
+        "score": 8.0,
+        "reason": "Robust context-aware segmentation for malicious instructions (IPI) targets detection of embedded prompt injections tailored to a query\u2014highly relevant to defending agents and evaluating instruction-level attacks.",
+        "slot": "relevance",
+        "sections": [
+          "llm-security",
+          "evaluation",
+          "agents"
+        ]
+      },
+      {
         "title": "Towards a Risk Assessment of Malicious Skill Files in Coding Agents",
         "url": "http://arxiv.org/abs/2608.05223v1",
         "summary": "The paper studies the attack surface introduced by agent skill folders in autonomous coding agents and presents an adversarial skill-synthesis method that converts 471 real shell commands into 2,826 benign-looking skills mapped to 11 ATT&CK tactics using six LLMs. It introduces a reproducible evaluation pipeline with stratification, evidence anchoring, refusal veto, and a deterministic declared-intent override, using a three-judge LLM panel validated against a blind human gold standard (\u03ba=0.85). In large-scale tests (5,629 runs), Gemini CLI was exploited in 95.5\u201396.1% and Qwen Code in 71.6\u201374.0% of runs with only 1.99% explicit safety recognition, and code/dataset are released at https://github.com/awsm-research/AgentJailbreak.",
@@ -2735,20 +2703,6 @@
         ]
       },
       {
-        "title": "Persistent Semantic Entities in Tool-Augmented LLM Systems",
-        "url": "http://arxiv.org/abs/2608.07952v1",
-        "summary": "The paper formalizes Persistent Semantic Entities (PSEs) in tool-augmented LLM agents\u2014defined by name binding, event triggering, and cross-boundary propagation\u2014and shows all 24 tested models are susceptible, with name binding necessary and dominant (0% without it). Persistence depends on contamination type: preference contamination persists undegraded (100% at t=10), instruction contamination persists where adopted, persona injection partially decays (90%\u219210%), and factual injection varies by model (self-corrected on Llama-3.1-8B and GPT-4o-mini but not on Qwen2.5-coder variants). Context-isolated self-verification reduces contamination by 20\u201379% (median 36.5%) versus keyword detectors with systematic false positives, and contamination compounds 1.9\u00d7 through a four-stage agent pipeline (40%\u219275%), with preference/instruction contamination highlighted as a concerning attack surface.",
-        "why_it_matters": "Directly informs red-teaming and defenses for agentic LLMs by identifying name-binding-driven, cross-session contamination modes that persist, evade naive monitoring, and amplify in pipelines.",
-        "score": 8.0,
-        "reason": "Inference-time guard that routes capabilities to avoid reasoning-centric jailbreaks targets a new, practical jailbreak class and proposes model-agnostic mitigations relevant for deployment.",
-        "slot": "relevance",
-        "sections": [
-          "llm-security",
-          "agents",
-          "evaluation"
-        ]
-      },
-      {
         "title": "Rethinking Self-Evolving Agents: Do We Still Need Prescribed Optimization Pipelines?",
         "url": "http://arxiv.org/abs/2608.09629v1",
         "summary": "The paper introduces Open-Ended Optimization (OEO), which fixes objective, interactions, budget, data boundary, and evaluation while letting a frontier model compose the optimization process online, contrasting it with two prescribed pipelines: SkillOpt and GEPA. In 14 head-to-head tests over 8 benchmark\u2013target-model settings, GPT-5.5\u2013driven OEO wins 12, ties 1, and narrowly loses 1 (by 0.21 pp) while using a median 34.3% of SkillOpt\u2019s interaction-token budget; a one-shot zero-interaction control indicates gains aren\u2019t from a single rewrite. However, delegation is capability-bound: SkillOpt beats OEO with a medium optimizer, a weak optimizer fails under OEO\u2019s interface, and trajectory analysis shows prescription shapes optimization trajectories more than final behavior, framing prescribed pipelines as capability-dependent scaffolding.",
@@ -2778,6 +2732,20 @@
         ]
       },
       {
+        "title": "Trajectory Dynamics in Self-Supervised Learning Latent Space for Audio Deepfake Detection",
+        "url": "http://arxiv.org/abs/2608.13817v1",
+        "summary": "The authors hypothesize that physiological constraints in human speech induce structured trajectory dynamics in SSL latent spaces, which synthetic speech violates. They test this by training a causal LSTM next-frame predictor on bonafide speech using Wav2Vec2-Large-AntiDeepfake features and comparing it to a static global-average-pooling baseline, then adding a supervised Stage 2 MLP on frozen LSTM states to assess the role of spoof supervision. Their system attains competitive or SOTA results on six deepfake benchmarks, with best published EER on ASVspoof 2021 (0.75%) and a bonafide-only Stage 1 surpassing a supervised baseline on DE2024, while trajectory dynamics yield substantial gains particularly on cross-corpus settings with diverse synthesis methods.",
+        "why_it_matters": "It shows that modeling latent trajectory dynamics\u2014rather than utterance-level statistics\u2014adds robust, cross-corpus detection signal, aligning with interests in temporal inductive biases for LLM/sequence model security.",
+        "score": 8.0,
+        "reason": "Live, evolving benchmark for agentic time-series analysis maps closely to time-series foundation models, agentic workflows, and evaluation methodology for temporal validity.",
+        "slot": "relevance",
+        "sections": [
+          "tsfm",
+          "agents",
+          "evaluation"
+        ]
+      },
+      {
         "title": "verdi: retrieval is not transfer for continual world model optimization",
         "url": "http://arxiv.org/abs/2608.09537v1",
         "summary": "The paper argues that retrieval is not transfer in optimizing pretrained world models: strategies validated on one model are only hypotheses for another and require target-side experimental validation. It introduces VERDI, a continual evidence-licensed optimization framework that builds Optimization Fingerprints via shared inference-time probes, retrieves prior strategies as ranked hypotheses, and validates them with a frozen target-side verifier while evolving probes when contradictions arise. Experiments on Ctrl-World, Cosmos, and RoboCoin report reduced search (68%), GPU cost (69%), negative transfer (0.34\u21920.06), and 83% sign accuracy in predicting transfer outcomes.",
@@ -2804,6 +2772,20 @@
           "agents",
           "llm-security",
           "evaluation"
+        ]
+      },
+      {
+        "title": "TimeSage-EV: A Live Benchmark for Agentic Time Series Analysis in Evolving Environments",
+        "url": "http://arxiv.org/abs/2608.14270v1",
+        "summary": "TimeSage-EV is a live benchmark for agentic time series analysis that evaluates temporal validity and cutoff-aware evidence use across 60 institutional scenarios and 1,485 scenario-period QA pairs from Feb 2023 to May 2026, spanning multiple release cadences. At each period, LLM agents receive time series data and source reports, with withheld target releases serving as ground truth, and are evaluated on state identification, data summarization, and outlook reasoning. Experiments with frontier LLM agents and TimeSage-1.0, a self-evolving agent with a reusable analytical skill library, show substantial performance gaps and recurring failures in temporal validity, exogenous context use, and adaptation, with monthly updates, code, a leaderboard, and failure-mode analyses released.",
+        "why_it_matters": "It offers a continuously updating, real-world benchmark to stress-test LLM agents\u2019 temporal grounding and adaptability\u2014key for secure, cutoff-aware forecasting and decision support in evolving time series contexts.",
+        "score": 7.0,
+        "reason": "Analysis of when agent skills fail informs robustness and harness design for agentic systems and red-teaming; valuable for understanding failure modes though somewhat broad.",
+        "slot": "relevance",
+        "sections": [
+          "agents",
+          "evaluation",
+          "llm-security"
         ]
       },
       {
@@ -2891,20 +2873,6 @@
         ]
       },
       {
-        "title": "Beyond Solvability: Task Learnability as a Static Prior for LLM RL Post-Training",
-        "url": "http://arxiv.org/abs/2608.09217v1",
-        "summary": "The paper introduces task learnability as a regime-conditional measure capturing how much tasks are expected to improve under a fixed LLM RL post-training setup, beyond snapshot solvability. They show learnability is reproducible across training contexts, predictive of downstream utility, and propose TrajVal, a probe-based estimator using a short probe run and two endpoint evaluations to approximate per-task learnability pre-training. TrajVal serves as a static prior for task sampling or as a multiplicative prior with online schedulers, improving data efficiency on math and logic benchmarks across model scales.",
-        "why_it_matters": "Offers a practical, pre-training prior for task selection in RL post-training that complements online schedulers, improving compute allocation for reasoning tasks.",
-        "score": 6.0,
-        "reason": "Proposes task learnability as a static prior to improve RL post-training sampling\u2014relevant to efficient RLHF/RL fine-tuning and evaluation of curricula for eliciting reasoning in LLMs (methodology applicable to red-teaming and costly post-training regimes).",
-        "slot": "relevance",
-        "sections": [
-          "alignment",
-          "evaluation",
-          "agents"
-        ]
-      },
-      {
         "title": "Model Discovery Agent: LLM-assisted Bayesian experiment design for data-efficient discovery of mechanistic world models",
         "url": "http://arxiv.org/abs/2608.09696v1",
         "summary": "The paper introduces the Model Discovery Agent (MDA), which pairs an LLM proposer for candidate mechanistic structures with Bayesian inference tools (SMC for parameters/structures, SBI for intractable likelihoods, and VoI for experimental design) to learn causal world models from few interventions. MDA works in an M-open setting by using predictive checks to detect model class misspecification, prompting the LLM to expand the hypothesis space and then identifying new parameters via designed experiments. The authors report that discovery and design are mutually reinforcing and that, on DPbench (physics), CHEMbench (chemistry), and HHbench (biology), MDA achieves state-of-the-art data-efficient model learning and interventional forecasting.",
@@ -2989,20 +2957,6 @@
         ]
       },
       {
-        "title": "Taxonomy-Driven Analysis of Open-Source AI Risk Mitigation Tools",
-        "url": "http://arxiv.org/abs/2608.07446v1",
-        "summary": "The paper presents a taxonomy-driven protocol that uses an LLM-assisted RAG pipeline to map capabilities of 21 open-source LLM evaluation and security tools to 32 subcategories of the extended MIT AI Risk Mitigation and Response Taxonomy. The study finds a skewed tooling landscape concentrated on technical and operational controls, with major gaps in governance, legal/regulatory, and financial/market controls, and reports moderate inter-rater reliability (Fleiss\u2019 Kappa = 0.509) and an F1 score of 75.5% after majority voting. It proposes a layered risk-mitigation architecture that combines tool-based controls with organizational and regulatory processes and offers a practical mapping highlighting where human oversight is still needed.",
-        "why_it_matters": "Gives a concrete, reproducible mapping from OSS LLM security/eval tools to a recognized risk taxonomy, clarifying coverage gaps relevant to red teaming, guardrails, and trust pipelines for foundation models (including time-series variants).",
-        "score": 5.0,
-        "reason": "Using VLMs to encode time-series as images speaks to practical efficiency and cross-modal approaches for time-series analysis and could impact deployment/serving costs for TS workloads.",
-        "slot": "relevance",
-        "sections": [
-          "efficiency",
-          "tsfm",
-          "agents"
-        ]
-      },
-      {
         "title": "GCPO: Diagnosing and Constraining Subspace Geometry in Rollout RL for LLMs",
         "url": "http://arxiv.org/abs/2608.11674v1",
         "summary": "The paper introduces Principal-Subspace Overlap, a dimension-corrected metric quantifying how individual rollout updates align with dominant singular subspaces of pretrained LLM weights, and observes transient overlap spikes that precede performance degradation despite low averages. It proposes GCPO, which applies hard bilateral orthogonal projections to constrain updates to complementary subspaces, preventing such excursions by construction. Across reasoning, coding, and tool-use tasks on Qwen3-8B and GLM4-9B, GCPO outperforms GRPO and variants (DAPO, GSPO), improves over base and strongest baselines by up to 27.69 and 2.37 points, and preserves general capability, eliminates response-length inflation, and stabilizes policy entropy.",
@@ -3027,20 +2981,6 @@
         "sections": [
           "efficiency",
           "agents"
-        ]
-      },
-      {
-        "title": "PolicyKG: An Agentic LLM Pipeline for Translating Institutional Policies into SHACL Knowledge Graphs",
-        "url": "http://arxiv.org/abs/2608.09028v1",
-        "summary": "PolicyKG is an agentic LLM pipeline that converts policy PDFs into SHACL via deontic sentence classification, FOL lifting, and a LangGraph workflow with validators, centered on a YAML Corpus Adapter that grounds predicates to a target ontology. On the AIT Policies and Procedures corpus, it reports 86.9% deontic classification accuracy (\u03ba=.709), SHACL F1=.866 on 69 shapes, 79.2% FOL coverage with the remainder using NL-to-SHACL fallback, and an audit placing the upper 95% bound on higher-order logic usage at 0.67%. Domain retargeting via registry swap improves GDPR property alignment (1/15\u219211/15; Fisher p<.001; h=1.53), but macro F1 drops to .370 on LexDeMod due to vocabulary mismatch, while outputs are hash-identical across runs.",
-        "why_it_matters": "Demonstrates a practical, auditable NL\u2192FOL\u2192SHACL pipeline with ontology-grounding and run determinism, highlighting domain shift/vocab grounding issues relevant to secure LLM agents and robust constraint generation.",
-        "score": 4.0,
-        "reason": "Practical pipeline for translating policies into formal constraints using LLMs and validators touches agentic system tooling and automated compliance verification, useful for governance/evaluation of agent behavior.",
-        "slot": "relevance",
-        "sections": [
-          "agents",
-          "evaluation",
-          "longform"
         ]
       }
     ],
@@ -3173,6 +3113,20 @@
         ]
       },
       {
+        "title": "Learning with Bilevel-Minimax Optimization for Efficient and Reliable Transfer Attacks",
+        "url": "http://arxiv.org/abs/2608.11815v1",
+        "summary": "The paper reframes transfer-based adversarial attacks as a bilevel-minimax problem, modeling the coupling among initialization, surrogate adaptation, and gradient-based perturbation optimization. It introduces BMAT, which uses a Soft Weight Modulator and an Implicit Gradient Approximator to enable ternary coupling and improve cross-architecture generalization, with accompanying theoretical analysis of the optimization dynamics. Experiments on classification and segmentation show BMAT outperforms 10+ baselines across 30+ victim models and can halve mIoU, with code released at the provided repository.",
+        "why_it_matters": "Offers a principled bilevel-minimax view and practical solver that materially improves black-box transferability, relevant to robust LLM jailbreak defenses and cross-architecture time-series model attacks/defenses.",
+        "score": 6.0,
+        "reason": "Analyzes geometry of rollout RL for LLMs and proposes diagnostics/constraints \u2014 relevant to post\u2011training stability of LLM agents and rollout-based fine\u2011tuning used in safety work.",
+        "slot": "relevance",
+        "sections": [
+          "agents",
+          "alignment",
+          "efficiency"
+        ]
+      },
+      {
         "title": "DreamGuard: Efficient Runtime Guardrail for LLM Agents via Risk-Aware World Model",
         "url": "http://arxiv.org/abs/2608.05695v1",
         "summary": "DreamGuard is a proactive runtime guardrail for LLM agents that uses a risk-aware world model to track a compact recurrent latent state over trajectories and forecast future latent states. From these forecasts, it derives immediate-hazard and prefix-risk evidence and fuses multi-horizon signals to decide on interventions before tool executions. Across four benchmarks and an online evaluation, DreamGuard outperforms generic, reactive, and proactive baselines with the best safety-utility trade-off and averages 25 ms end-to-end latency per call.",
@@ -3198,20 +3152,6 @@
           "agents",
           "efficiency",
           "llm-security"
-        ]
-      },
-      {
-        "title": "Taxonomy-Driven Analysis of Open-Source AI Risk Mitigation Tools",
-        "url": "http://arxiv.org/abs/2608.07446v1",
-        "summary": "The paper presents a taxonomy-driven protocol that uses an LLM-assisted RAG pipeline to map capabilities of 21 open-source LLM evaluation and security tools to 32 subcategories of the extended MIT AI Risk Mitigation and Response Taxonomy. The study finds a skewed tooling landscape concentrated on technical and operational controls, with major gaps in governance, legal/regulatory, and financial/market controls, and reports moderate inter-rater reliability (Fleiss\u2019 Kappa = 0.509) and an F1 score of 75.5% after majority voting. It proposes a layered risk-mitigation architecture that combines tool-based controls with organizational and regulatory processes and offers a practical mapping highlighting where human oversight is still needed.",
-        "why_it_matters": "Gives a concrete, reproducible mapping from OSS LLM security/eval tools to a recognized risk taxonomy, clarifying coverage gaps relevant to red teaming, guardrails, and trust pipelines for foundation models (including time-series variants).",
-        "score": 5.0,
-        "reason": "Using VLMs to encode time-series as images speaks to practical efficiency and cross-modal approaches for time-series analysis and could impact deployment/serving costs for TS workloads.",
-        "slot": "relevance",
-        "sections": [
-          "efficiency",
-          "tsfm",
-          "agents"
         ]
       },
       {
@@ -3331,6 +3271,20 @@
         ]
       },
       {
+        "title": "MazeRunner: Nonlinear Task and Clue Orchestration for LLM-driven Black-Box Automated Penetration Testing",
+        "url": "http://arxiv.org/abs/2608.14216v1",
+        "summary": "MazeRunner introduces a three-agent orchestration framework for autonomous black-box penetration testing that separates global orchestration, context-intensive execution, and failure-oriented review while persistently tracking task states and evidence. Designed to handle nonlinear attack graphs with ambiguous failures and long-horizon clues, it enables action revision, prerequisite recovery, branch switching, and long-range clue correlation. On 10 HTB targets with a 20M-token cap and leakage controls, MazeRunner (Claude Sonnet 4.5) completes 47.7% of annotated subtasks and achieves user-level or higher access on six targets (root on two), outperforming PentestGPT-V2 and Claude Code baselines that reach user-level access on only two and never root.",
+        "why_it_matters": "Demonstrates a concrete orchestration pattern and evaluation showing improved branch exploration and shell acquisition under strict budget/leakage controls, relevant to secure LLM agent design and planning for nonlinear, long-horizon tasks.",
+        "score": 9.0,
+        "reason": "Automated black-box penetration testing with LLM agents targets tooling, exploration failures, and realistic nonlinear attack graphs\u2014highly relevant to LLM security and agentic attack surfaces.",
+        "slot": "relevance",
+        "sections": [
+          "agents",
+          "llm-security",
+          "evaluation"
+        ]
+      },
+      {
         "title": "Enhancing Anomaly Resilience in Research Networks: A Large-Scale Forecasting Benchmark for Dynamic Security Baselining",
         "url": "http://arxiv.org/abs/2608.05605v1",
         "summary": "The paper introduces a high-fidelity traffic forecasting framework to create dynamic security baselines for RENs, addressing the challenge that elephant flows resemble volumetric attacks to conventional monitors. Using a 57-day Internet2 dataset (13.7B packets across ten backbone routers), it benchmarks six forecasting model families, including SARIMA and long-sequence architectures (TiDE, PatchTST), over 960 configurations. Results show advanced models\u2014especially TiDE\u2014reduce baseline prediction error by 30\u201342% (p < 0.001) and that a new anomaly-integration strategy yields a 3.3% robustness gain under noise, improving separation of scientific bursts from anomalies.",
@@ -3388,35 +3342,6 @@
         ]
       },
       {
-        "title": "DiffSafeMerge: Mitigating Backdoor Inheritance in Diffusion Model Merging",
-        "url": "http://arxiv.org/abs/2608.09445v1",
-        "summary": "The paper highlights that merging diffusion checkpoints can inherit dormant backdoors from compromised public sources while maintaining normal-looking generations, and mitigating this is hard without knowing the attacker specifics or sacrificing quality. It proposes DiffSafeMerge, which uses a small unlabeled clean set and fixed attack-agnostic stress probes to score source blocks, attenuate suspicious contributions toward a trusted reference, and choose attenuation under a clean denoising-loss budget. Evaluated across four attacks, two datasets, and 21 targets, DSM preserves zero worst-target ASR where intended merging already had it, eliminates remaining matches over three seeds even when baseline ASR was 48\u2013100%, and among methods with zero worst-target ASR on both datasets achieves the lowest case-averaged FID in the seed-0 comparison.",
-        "why_it_matters": "Backdoor-safe merging for diffusion checkpoints parallels secure model composition in LLMs and offers a practical, attack-agnostic mitigation strategy that balances safety with generative quality.",
-        "score": 8.0,
-        "reason": "Telemetry and concealment for self-adapting generative AI addresses governance and detection limits for models that modify themselves in production\u2014important for model-risk management, attack concealment, and detection strategies.",
-        "slot": "relevance",
-        "sections": [
-          "policy",
-          "llm-security",
-          "adversarial-ml",
-          "evaluation"
-        ]
-      },
-      {
-        "title": "Persistent Semantic Entities in Tool-Augmented LLM Systems",
-        "url": "http://arxiv.org/abs/2608.07952v1",
-        "summary": "The paper formalizes Persistent Semantic Entities (PSEs) in tool-augmented LLM agents\u2014defined by name binding, event triggering, and cross-boundary propagation\u2014and shows all 24 tested models are susceptible, with name binding necessary and dominant (0% without it). Persistence depends on contamination type: preference contamination persists undegraded (100% at t=10), instruction contamination persists where adopted, persona injection partially decays (90%\u219210%), and factual injection varies by model (self-corrected on Llama-3.1-8B and GPT-4o-mini but not on Qwen2.5-coder variants). Context-isolated self-verification reduces contamination by 20\u201379% (median 36.5%) versus keyword detectors with systematic false positives, and contamination compounds 1.9\u00d7 through a four-stage agent pipeline (40%\u219275%), with preference/instruction contamination highlighted as a concerning attack surface.",
-        "why_it_matters": "Directly informs red-teaming and defenses for agentic LLMs by identifying name-binding-driven, cross-session contamination modes that persist, evade naive monitoring, and amplify in pipelines.",
-        "score": 8.0,
-        "reason": "Inference-time guard that routes capabilities to avoid reasoning-centric jailbreaks targets a new, practical jailbreak class and proposes model-agnostic mitigations relevant for deployment.",
-        "slot": "relevance",
-        "sections": [
-          "llm-security",
-          "agents",
-          "evaluation"
-        ]
-      },
-      {
         "title": "An Empirical Study of Output-to-Input Loops for Black-Box Backdoor Detection in Fine-Tuned Open-Weight LLMs",
         "url": "http://arxiv.org/abs/2608.11348v1",
         "summary": "The paper proposes self-feeding, a black-box test that recursively feeds a model\u2019s outputs back as inputs to drift toward fine-tuning data, enabling backdoor discovery without training data, clean baselines, or trigger knowledge. Evaluated on six open-weight LLMs (3B\u201315B) with eleven backdoor categories and twenty prompts over up to ten steps, self-feeding detects backdoors in five models with 92.0% pooled precision, while a same-prompt baseline succeeds on only one of 120 prompt-model pairs; some prompts (jokes, arithmetic, coffee recipes) reach triggers in a few steps. Despite low per-prompt recall (19.2%), multi-prompt use raises model-level detection, though one model never triggers and there are two false positives; truncating to four steps preserves 100% model-level precision and cuts queries by 60%.",
@@ -3456,6 +3381,34 @@
         "sections": [
           "llm-security",
           "adversarial-ml",
+          "evaluation"
+        ]
+      },
+      {
+        "title": "The More Popular, The Harder to Forget: Adaptive Popularity for LLM Unlearning",
+        "url": "http://arxiv.org/abs/2608.14229v1",
+        "summary": "The paper observes that popular facts are memorized more deeply in LLM pretraining and are harder to unlearn, while prior unlearning methods apply uniform gradient pressure regardless of frequency. It proposes AdaPop, which scales unlearning pressure using local token confidence and a per-fact popularity-dependent exponent from an external proxy, and uses a dual-ascent controller to automatically tune the retain penalty each epoch. On three model families and two benchmarks, AdaPop reduces leakage of forgotten content by ~5x on paraphrases and ~1.6x on adversarial reformulations, with internal metrics showing larger divergence from pre-unlearning states on the forget set and closer retention on the retain set compared to baselines.",
+        "why_it_matters": "Targets frequency-aware unlearning with automated retain/forget control, improving robustness to paraphrase/adversarial probes\u2014relevant for red-teaming, safety fine-tuning, and deployment-time data governance.",
+        "score": 8.0,
+        "reason": "Directly tackles unlearning/memorization\u2014a core LLM security concern (data extraction, forgetting) with a practical adaptive method and measured leakage improvements.",
+        "slot": "relevance",
+        "sections": [
+          "llm-security",
+          "adversarial-ml",
+          "evaluation"
+        ]
+      },
+      {
+        "title": "Trajectory Dynamics in Self-Supervised Learning Latent Space for Audio Deepfake Detection",
+        "url": "http://arxiv.org/abs/2608.13817v1",
+        "summary": "The authors hypothesize that physiological constraints in human speech induce structured trajectory dynamics in SSL latent spaces, which synthetic speech violates. They test this by training a causal LSTM next-frame predictor on bonafide speech using Wav2Vec2-Large-AntiDeepfake features and comparing it to a static global-average-pooling baseline, then adding a supervised Stage 2 MLP on frozen LSTM states to assess the role of spoof supervision. Their system attains competitive or SOTA results on six deepfake benchmarks, with best published EER on ASVspoof 2021 (0.75%) and a bonafide-only Stage 1 surpassing a supervised baseline on DE2024, while trajectory dynamics yield substantial gains particularly on cross-corpus settings with diverse synthesis methods.",
+        "why_it_matters": "It shows that modeling latent trajectory dynamics\u2014rather than utterance-level statistics\u2014adds robust, cross-corpus detection signal, aligning with interests in temporal inductive biases for LLM/sequence model security.",
+        "score": 8.0,
+        "reason": "Live, evolving benchmark for agentic time-series analysis maps closely to time-series foundation models, agentic workflows, and evaluation methodology for temporal validity.",
+        "slot": "relevance",
+        "sections": [
+          "tsfm",
+          "agents",
           "evaluation"
         ]
       },
@@ -3528,6 +3481,20 @@
           "llm-security",
           "evaluation",
           "model-releases"
+        ]
+      },
+      {
+        "title": "TimeSage-EV: A Live Benchmark for Agentic Time Series Analysis in Evolving Environments",
+        "url": "http://arxiv.org/abs/2608.14270v1",
+        "summary": "TimeSage-EV is a live benchmark for agentic time series analysis that evaluates temporal validity and cutoff-aware evidence use across 60 institutional scenarios and 1,485 scenario-period QA pairs from Feb 2023 to May 2026, spanning multiple release cadences. At each period, LLM agents receive time series data and source reports, with withheld target releases serving as ground truth, and are evaluated on state identification, data summarization, and outlook reasoning. Experiments with frontier LLM agents and TimeSage-1.0, a self-evolving agent with a reusable analytical skill library, show substantial performance gaps and recurring failures in temporal validity, exogenous context use, and adaptation, with monthly updates, code, a leaderboard, and failure-mode analyses released.",
+        "why_it_matters": "It offers a continuously updating, real-world benchmark to stress-test LLM agents\u2019 temporal grounding and adaptability\u2014key for secure, cutoff-aware forecasting and decision support in evolving time series contexts.",
+        "score": 7.0,
+        "reason": "Analysis of when agent skills fail informs robustness and harness design for agentic systems and red-teaming; valuable for understanding failure modes though somewhat broad.",
+        "slot": "relevance",
+        "sections": [
+          "agents",
+          "evaluation",
+          "llm-security"
         ]
       },
       {
@@ -3642,20 +3609,6 @@
         ]
       },
       {
-        "title": "Beyond Solvability: Task Learnability as a Static Prior for LLM RL Post-Training",
-        "url": "http://arxiv.org/abs/2608.09217v1",
-        "summary": "The paper introduces task learnability as a regime-conditional measure capturing how much tasks are expected to improve under a fixed LLM RL post-training setup, beyond snapshot solvability. They show learnability is reproducible across training contexts, predictive of downstream utility, and propose TrajVal, a probe-based estimator using a short probe run and two endpoint evaluations to approximate per-task learnability pre-training. TrajVal serves as a static prior for task sampling or as a multiplicative prior with online schedulers, improving data efficiency on math and logic benchmarks across model scales.",
-        "why_it_matters": "Offers a practical, pre-training prior for task selection in RL post-training that complements online schedulers, improving compute allocation for reasoning tasks.",
-        "score": 6.0,
-        "reason": "Proposes task learnability as a static prior to improve RL post-training sampling\u2014relevant to efficient RLHF/RL fine-tuning and evaluation of curricula for eliciting reasoning in LLMs (methodology applicable to red-teaming and costly post-training regimes).",
-        "slot": "relevance",
-        "sections": [
-          "alignment",
-          "evaluation",
-          "agents"
-        ]
-      },
-      {
         "title": "ProbGuard: Calibrated Safety Risk Estimation from LLM Output Distributions",
         "url": "http://arxiv.org/abs/2608.10621v1",
         "summary": "ProbGuard reframes LLM safety assessment as probabilistic risk estimation over the model\u2019s early output distribution rather than deterministic classification on completed token sequences. It estimates the probability of unsafe continuation via Monte Carlo over generated prefix distributions and calibrates this risk through post-training, enabling early stopping of unsafe generations. Empirically, it achieves the best calibration across nine model\u2013dataset settings (average Brier and ECE reduced by 79.6% and 71.9% vs. the best baseline) and caps jailbreak attack success to \u22641% after only the first ten decoding steps.",
@@ -3698,17 +3651,17 @@
         ]
       },
       {
-        "title": "Task- and dataset-specific information in protein language models",
-        "url": "http://arxiv.org/abs/2608.12090v1",
-        "summary": "Across 13 PLMs and 15 downstream tasks, intermediate-layer embeddings often outperform last-layer embeddings, contradicting the common practice of using the final layer. The layer at which task-relevant information concentrates depends on the task\u2013pretraining alignment and the dataset: residue-level tasks see information accumulate with depth, while whole-protein performance is dataset-driven, with DMS favoring shallow layers and diverse natural proteins favoring deeper layers. PLM performance degrades markedly on tasks involving artificial proteins.",
-        "why_it_matters": "Highlights layer- and dataset-specific representation selection, informing secure model probing, adversarial evaluation, and transfer strategies analogous to layerwise selection in LLMs and time-series FMs.",
+        "title": "A Four-Axis Trustworthiness Benchmark for LLM-as-Judge in Principle-Based Regulation",
+        "url": "http://arxiv.org/abs/2608.14329v1",
+        "summary": "The paper argues LLM-as-judge for principle-based regulation must be evaluated on four axes: accuracy, paraphrase robustness, adversarial robustness, and calibration, and releases Principle-Bench with 168 FCA-aligned crypto promotion scenarios including paraphrase, keyword-stuffing, and boundary perturbations. It introduces Ceca, a calibrated, auditable assessor emitting per-exemplar counterfactual attributions, and evaluates keyword counting, three sentence-transformer embedders, an open-weight LLM-judge, and a calibrated cascade. Results show no method dominates all axes; a strong 120B judge drops from 0.74 to 0.27 accuracy under keyword-stuffed Consumer Duty inputs and another family\u2019s judge agrees at \u03ba=0.16 on that split, underscoring model-specific failures and the need for per-principle adversarial deception reporting and post-hoc calibration alongside aggregate accuracy.",
+        "why_it_matters": "Offers a concrete, multi-axis benchmark and calibrated assessment method to stress-test LLM judges against paraphrase and adversarial distribution shifts\u2014directly relevant to eval robustness and model governance in safety-critical LLM deployments.",
         "score": 6.0,
-        "reason": "Bilevel\u2011minimax formulation for transfer attacks improves black\u2011box adversarial transferability \u2014 relevant for adversarial robustness and attack methodology informing LLM security.",
+        "reason": "LLM-as-judge reliability and adversarial robustness directly relevant to evaluation methodology and guardrail assessment; crypto-financial focus slightly less aligned with core security/time-series interests.",
         "slot": "relevance",
         "sections": [
-          "adversarial-ml",
-          "llm-security",
-          "evaluation"
+          "evaluation",
+          "policy",
+          "llm-security"
         ]
       },
       {
@@ -3781,20 +3734,6 @@
         ]
       },
       {
-        "title": "PolicyKG: An Agentic LLM Pipeline for Translating Institutional Policies into SHACL Knowledge Graphs",
-        "url": "http://arxiv.org/abs/2608.09028v1",
-        "summary": "PolicyKG is an agentic LLM pipeline that converts policy PDFs into SHACL via deontic sentence classification, FOL lifting, and a LangGraph workflow with validators, centered on a YAML Corpus Adapter that grounds predicates to a target ontology. On the AIT Policies and Procedures corpus, it reports 86.9% deontic classification accuracy (\u03ba=.709), SHACL F1=.866 on 69 shapes, 79.2% FOL coverage with the remainder using NL-to-SHACL fallback, and an audit placing the upper 95% bound on higher-order logic usage at 0.67%. Domain retargeting via registry swap improves GDPR property alignment (1/15\u219211/15; Fisher p<.001; h=1.53), but macro F1 drops to .370 on LexDeMod due to vocabulary mismatch, while outputs are hash-identical across runs.",
-        "why_it_matters": "Demonstrates a practical, auditable NL\u2192FOL\u2192SHACL pipeline with ontology-grounding and run determinism, highlighting domain shift/vocab grounding issues relevant to secure LLM agents and robust constraint generation.",
-        "score": 4.0,
-        "reason": "Practical pipeline for translating policies into formal constraints using LLMs and validators touches agentic system tooling and automated compliance verification, useful for governance/evaluation of agent behavior.",
-        "slot": "relevance",
-        "sections": [
-          "agents",
-          "evaluation",
-          "longform"
-        ]
-      },
-      {
         "title": "Cross-Corpus Evaluation of Generalizable Vulnerability Detection in IoT Firmware",
         "url": "http://arxiv.org/abs/2608.11492v1",
         "summary": "The paper introduces IoTVulBench, a human-verified, contamination-screened benchmark for cross-corpus IoT firmware vulnerability detection, and evaluates five model architectures, two tuning methods, and three curriculum strategies with ensemble, distillation, and robustness analyses. Models trained on IoTVulBench outperform matched single-source datasets (MCC 0.58 vs. 0.44 for PrimeVul and 0.39 for D2A), with staged curriculum learning raising MCC to 0.69 and a diversity-optimized ensemble reaching 0.73, surpassing a static analyzer (0.31) and PrimeVul by large margins while maintaining 86% performance under identifier renaming and showing strong calibration and largely faithful explanations. At a 0.5% FPR, the model missed 21% of vulnerabilities versus 71% for the strongest comparator, indicating domain-matched data and curriculum design\u2014not model scale alone\u2014drive generalization in firmware vulnerability detection.",
@@ -3805,22 +3744,6 @@
         "sections": [
           "adversarial-ml",
           "evaluation"
-        ]
-      }
-    ],
-    "model-releases": [
-      {
-        "title": "Measure, Don't Optimize: Forecasting Recovery in LLM Unlearning",
-        "url": "http://arxiv.org/abs/2608.11408v1",
-        "summary": "The paper introduces J-Access, an inference-time audit that projects intermediate representations into vocabulary space to measure how often target concepts remain accessible along the output pathway, hypothesizing that residual accessibility predicts recovery susceptibility. Auditing 398 public unlearned models across eight methods, they find most retain accessibility above a retain-only gold level, pre-attack accessibility predicts recovery speed and extent at the model level (but not per-fact), and directly minimizing J-Access causes the model to hide knowledge from the audit while increasing post-attack recovery. They conclude J-Access is useful as a model-level diagnostic for residual susceptibility and caution against turning internal audits into optimization targets without validation.",
-        "why_it_matters": "Offers an actionable, model-level risk signal for unlearning robustness and a clear warning about Goodharting internal audits\u2014relevant for designing secure unlearning and audit pipelines in LLMs.",
-        "score": 7.0,
-        "reason": "Investigates latent recovery after LLM unlearning with an audit (J\u2011Access) \u2014 important for data\u2011removal/extraction risk monitoring and evaluation methodology.",
-        "slot": "relevance",
-        "sections": [
-          "llm-security",
-          "evaluation",
-          "model-releases"
         ]
       }
     ],
@@ -3836,20 +3759,6 @@
         "sections": [
           "evaluation",
           "policy",
-          "longform"
-        ]
-      },
-      {
-        "title": "Intern-S2-Preview: Scientific Agentic Foundation Model",
-        "url": "http://arxiv.org/abs/2608.13505v1",
-        "summary": "Intern-S2-Preview introduces scientific agentic foundation models trained via multimodal pretraining on rendered scientific documents, interleaved image-text, and diverse scientific corpora, followed by a unified post-training stack of SFT, scalable multi-task RL, black- and white-box agentic RL, and on-policy distillation. The pipeline adds practical rollout/training techniques\u2014partial rollout with off-policy correction, adaptive length regularization, online speculative decoding, robust multi-task optimization, and trace-aware experience assembly\u2014and explores architecture-level extensions: a 397B model with time series modules for efficient long-sequence understanding and numerical forecasting, plus a separate Memory Decoder path for rapid specialization without changing the frozen backbone. Evaluations report competitive or leading results across scientific, multimodal, agentic, and general-purpose benchmarks, with time-series gains on SciTS and a MemDec-4B extension improving Biology-Instructions average from 56.92 to 60.32 without modifying the 397B backbone.",
-        "why_it_matters": "Brings a concrete agentic RL + multimodal + TS forecasting stack with stability tricks and a memory-augmented specialization path relevant to secure tool-use agents and time-series LLMs.",
-        "score": 6.0,
-        "reason": "Agentic multimodal scientific foundation model work intersects with agentic-system attack surfaces and long-horizon reasoning, relevant for security analysis though not focused on adversarial robustness.",
-        "slot": "relevance",
-        "sections": [
-          "agents",
-          "tsfm",
           "longform"
         ]
       },
