@@ -69,7 +69,7 @@ class OpenRouterClient:
             "requests": [{"custom_id": r.custom_id, "body": self._build_body(r)} for r in requests],
         }
         resp = httpx.post(_BATCHES_URL, json=payload, headers=self._headers, timeout=30.0)
-        resp.raise_for_status()
+        _raise_with_body(resp)
         data = resp.json()
         return BatchHandle(
             provider="openrouter",
@@ -87,7 +87,7 @@ class OpenRouterClient:
             # rather than raising, since a hard failure here would abort the
             # whole stage over a benign timing race.
             return Pending(provider="openrouter", external_id=handle.external_id)
-        resp.raise_for_status()
+        _raise_with_body(resp)
         data = resp.json()
 
         if data["status"] not in _TERMINAL_STATUSES:
@@ -118,6 +118,13 @@ class OpenRouterClient:
                 )
             )
         return responses
+
+
+def _raise_with_body(resp: httpx.Response) -> None:
+    # raise_for_status() drops the response body, which is where OpenRouter
+    # puts the actual reason (e.g. "model does not have a :batch endpoint").
+    if resp.is_error:
+        raise RuntimeError(f"OpenRouter {resp.status_code} {resp.request.url}: {resp.text[:500]}")
 
 
 def _try_parse_json(text: str) -> dict | None:

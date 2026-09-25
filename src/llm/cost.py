@@ -36,6 +36,8 @@ PRICING: dict[str, tuple[float, float]] = {
     # balance instead of a direct vendor account. Same list price as direct.
     "openai/gpt-5-mini": (0.25, 2.00),
     "openai/gpt-5": (1.25, 10.00),
+    # Confirmed against OpenRouter's /models endpoint 2026-09-26.
+    "openai/gpt-5-nano-2025-08-07": (0.05, 0.40),
 }
 
 

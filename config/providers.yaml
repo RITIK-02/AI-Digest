@@ -23,7 +23,11 @@ providers:
     cheapest_tier: "gpt-5-mini-2025-08-07"
     mid_tier: "gpt-5-2025-08-07"
   openrouter:
-    cheapest_tier: "openai/gpt-5-mini"
+    # gpt-5-nano, not gpt-5-mini: as of 2026-09-26 OpenRouter no longer
+    # offers a :batch endpoint for gpt-5-mini or gpt-5 (400 "does not have a
+    # :batch endpoint"). nano is the cheapest GPT-5 model it still batches.
+    # mid_tier below has the same problem and currently can't batch either.
+    cheapest_tier: "openai/gpt-5-nano-2025-08-07"
     mid_tier: "openai/gpt-5"
 
 routing:
