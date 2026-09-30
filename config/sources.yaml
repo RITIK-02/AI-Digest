@@ -1,12 +1,13 @@
 # Feed configuration. One block per source module in src/sources/.
-# Only arxiv is implemented so far — see CLAUDE.md "Source notes" for the rest.
+# arxiv and hn are implemented — see CLAUDE.md "Source notes" for the rest.
 
 arxiv:
   enabled: true
   base_url: "https://export.arxiv.org/api/query"
   # One request per 3 seconds, batched by category — arXiv's rate limit is real.
   rate_limit_seconds: 3.0
-  max_results_per_category: 100
+  # Sized for the 3-day cadence; cs.LG alone runs a few hundred a day.
+  max_results_per_category: 300
   categories:
     - cs.CL   # computation and language
     - cs.CR   # cryptography and security
@@ -15,7 +16,14 @@ arxiv:
     - stat.ML
 
 hn:
-  enabled: false
+  enabled: true
+  base_url: "https://hn.algolia.com/api/v1/search_by_date"
+  # Algolia API with a points threshold — see CLAUDE.md "Source notes".
+  # 100 is roughly "made the HN front page," which keeps volume manageable
+  # without a topic filter (the embedding prefilter does the topic work).
+  points_threshold: 100
+  lookback_hours: 72  # matches the 3-day cadence
+  max_results: 200
 
 bluesky:
   enabled: false

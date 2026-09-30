@@ -25,11 +25,11 @@ LIMITS_PATH = Path(__file__).resolve().parents[2] / "config" / "limits.yaml"
 # though every call here goes through the ~50% cheaper Batch API, so the
 # budget cap in check_budget() overestimates actual spend rather than under.
 #
-# claude-sonnet-5 is $2.00/$10.00 introductory through 2026-08-31, reverting
-# to $3.00/$15.00 on 2026-09-01 — update this when that happens.
+# claude-sonnet-5 was $2.00/$10.00 introductory through 2026-08-31; now back
+# at $3.00/$15.00.
 PRICING: dict[str, tuple[float, float]] = {
     "claude-haiku-4-5-20251001": (1.00, 5.00),
-    "claude-sonnet-5": (2.00, 10.00),
+    "claude-sonnet-5": (3.00, 15.00),
     "gpt-5-mini-2025-08-07": (0.25, 2.00),
     "gpt-5-2025-08-07": (1.25, 10.00),
     # OpenRouter slugs — same underlying models, billed via OpenRouter's own
@@ -38,6 +38,8 @@ PRICING: dict[str, tuple[float, float]] = {
     "openai/gpt-5": (1.25, 10.00),
     # Confirmed against OpenRouter's /models endpoint 2026-09-26.
     "openai/gpt-5-nano-2025-08-07": (0.05, 0.40),
+    # Confirmed against OpenRouter's /endpoints listing 2026-10-01.
+    "anthropic/claude-sonnet-5.5": (2.00, 10.00),
 }
 
 

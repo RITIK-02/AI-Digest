@@ -52,8 +52,11 @@ class OpenRouterClient:
         body: dict = {"messages": messages, "max_tokens": self.max_tokens}
         # Same reasoning-token-starvation risk as OpenAIClient — see there.
         # OpenRouter normalizes this to its own `reasoning` object rather
-        # than OpenAI's flat `reasoning_effort` field.
-        if self.reasoning_effort:
+        # than OpenAI's flat `reasoning_effort` field. OpenAI models only:
+        # on Anthropic models OpenRouter turns any effort into an extended
+        # thinking budget (min 1024 tokens), which would eat summarize's
+        # whole max_tokens.
+        if self.reasoning_effort and self.model.startswith("openai/"):
             body["reasoning"] = {"effort": self.reasoning_effort}
         if req.json_schema and self.strict_json_schema:
             body["response_format"] = {

@@ -1,8 +1,8 @@
-"""Entry point for the 02:00 UTC `submit` workflow.
+"""Entry point for the `submit` workflow (every 3 days, 01:17 UTC).
 
 Fetch sources, dedupe, embed/prefilter, submit the triage batch. Summarize
 and brief can't be submitted yet — they depend on triage scores, which won't
-exist until collect.py resolves the batch three hours later. Nothing here
+exist until collect.py resolves the batch later the same day. Nothing here
 touches the frontend or sends email; that is collect.py's job.
 """
 

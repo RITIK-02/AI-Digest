@@ -5,9 +5,13 @@ name: collect
 # site/ on push — deploy is a build artifact push, not a step here. This
 # workflow still builds the site itself first so a broken build fails the
 # workflow loudly instead of silently reaching Pages.
+#
+# Same days as submit.yml, ~6.5h later. Must stay on the same UTC date as
+# submit — "today's candidates" are keyed by UTC run date. The wide gap
+# absorbs GitHub's cron delay and gives the triage batch time to finish.
 on:
   schedule:
-    - cron: "0 5 * * *"
+    - cron: "43 7 */3 * *"
   workflow_dispatch:
 
 permissions:

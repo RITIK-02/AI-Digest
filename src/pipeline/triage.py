@@ -18,7 +18,7 @@ import yaml
 
 from src.llm.cost import record_and_check
 from src.llm.routing import get_client_for_batch, poll_until_done, submit_stage_batch
-from src.models import BatchHandle, LLMRequest, TriageResult
+from src.models import BatchHandle, LLMRequest, Section, TriageResult
 
 PROMPT_VERSION = "1"
 BATCH_SIZE = 10
@@ -36,7 +36,13 @@ RESULT_SCHEMA = {
                 "type": "object",
                 "properties": {
                     "score": {"type": "number"},
-                    "sections": {"type": "array", "items": {"type": "string"}},
+                    # Enum, not free string: strict schema mode can only
+                    # keep the model inside the taxonomy if it's told what
+                    # the taxonomy is.
+                    "sections": {
+                        "type": "array",
+                        "items": {"type": "string", "enum": [s.value for s in Section]},
+                    },
                     "reason": {"type": "string"},
                 },
                 "required": ["score", "sections", "reason"],
@@ -134,6 +140,12 @@ def collect(
             ).fetchone()
             if row is None:
                 continue
+            # An off-taxonomy tag ("security", "privacy") fails the tag, not
+            # the item — the score and the valid tags are still usable.
+            raw_sections = entry.get("sections", [])
+            sections = [s for s in raw_sections if s in Section._value2member_map_]
+            if dropped := [s for s in raw_sections if s not in Section._value2member_map_]:
+                print(f"[triage] item {item_id}: dropped unknown section tags {dropped}")
             try:
                 tr = TriageResult(
                     item_hash=row["content_hash"],
@@ -141,7 +153,7 @@ def collect(
                     provider=response.cost.provider,
                     model=response.cost.model,
                     score=float(entry.get("score", 0)),
-                    sections=entry.get("sections", []),
+                    sections=sections,
                     reason=entry.get("reason", ""),
                     cost_usd=per_item_cost,
                 )

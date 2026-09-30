@@ -25,16 +25,17 @@ just with one shared budget instead of one per section.
 Every non-relevance item renders a one-line reason — without it, exploration
 is indistinguishable from a ranking bug.
 
-With only arXiv as a source this pass, there is no HN/citation signal to
-satisfy the adjacent slot's "independent quality signal" requirement, and no
-saved-item history for wildcard slots (cold start, no clicks yet) — so those
-two slots render empty. That is the mechanism working as specified against a
-thin data diet, not a shortcut. `rising`, `deadlines`, and `jobs` are
-similarly unfilled: they need sources (HN/social velocity, a curated CFP
-list, a jobs feed) this pass doesn't have. `has-code` and `watchlist` ARE
-fully implemented — both work off data arXiv already provides, and stay in
-the section browse view (they're filters/curated lists, not relevance-ranked,
-so they don't belong in the flat top-N).
+HN is now a source (src/sources/hn.py), so `rising` is real: ranked by actual
+HN points on the story's attached HN discussion item(s), never estimated —
+see _rising_section(). There's still no citation-velocity source, and no
+saved-item history for wildcard slots (cold start, no clicks yet), so the
+adjacent and wildcard slots stay unfilled — that quality signal now exists
+for HN-linked stories but isn't wired into the adjacent slot yet (would need
+centroid-distance computation this pass didn't add). `deadlines` and `jobs`
+are still unfilled: no CFP list or jobs feed exists yet. `has-code` and
+`watchlist` are fully implemented and stay in the section browse view
+(they're filters/curated lists, not relevance-ranked, so they don't belong
+in the flat top-N).
 """
 
 from __future__ import annotations
@@ -62,7 +63,6 @@ EPSILON = 0.1  # epsilon-greedy exploration within the relevance slot
 MIN_SCORE_FOR_SECTION = 4.0  # below this, an item doesn't belong in the section at all
 
 _NO_SOURCE_SECTIONS = {
-    "rising": "needs HN points / social velocity / citation data — no such source yet",
     "deadlines": "needs a curated CFP list plus deadline detection — not built yet",
     "jobs": "needs a jobs feed — not built yet",
 }
@@ -221,6 +221,44 @@ def _watchlist_section(conn: sqlite3.Connection, story_ids: list[int]) -> list[d
     return matched[:SECTION_CAP]
 
 
+def _rising_section(conn: sqlite3.Connection, story_ids: list[int]) -> list[dict]:
+    """Ranked by traction velocity, not relevance — real HN points on the
+    story's attached HN discussion item(s), never estimated. A story can
+    rank here regardless of its triage score, same as watchlist/has-code."""
+    if not story_ids:
+        return []
+    placeholders = ",".join("?" for _ in story_ids)
+    rows = conn.execute(
+        f"""
+        SELECT s.id AS story_id, ci.id AS item_id, ci.title, ci.url,
+               i.raw_payload_json, tr.score, sm.summary, sm.why_it_matters
+        FROM stories s
+        JOIN items ci ON ci.id = s.canonical_item_id
+        JOIN story_items si ON si.story_id = s.id
+        JOIN items i ON i.id = si.item_id AND i.source = 'hn'
+        LEFT JOIN triage_results tr ON tr.content_hash = ci.content_hash
+        LEFT JOIN summaries sm ON sm.content_hash = ci.content_hash
+        WHERE s.id IN ({placeholders})
+        """,
+        story_ids,
+    ).fetchall()
+
+    best_per_story: dict[int, dict] = {}
+    for row in rows:
+        points = json.loads(row["raw_payload_json"]).get("points")
+        if points is None:
+            continue
+        current = best_per_story.get(row["story_id"])
+        if current is None or points > current["points"]:
+            best_per_story[row["story_id"]] = {**dict(row), "points": points}
+
+    ranked = sorted(best_per_story.values(), key=lambda r: r["points"], reverse=True)
+    return [
+        {**r, "slot": "rising", "reason": f"{r['points']} points on HN"}
+        for r in ranked[:SECTION_CAP]
+    ]
+
+
 def _render_item(row: dict) -> dict:
     sections_json = row.get("sections_json")
     return {
@@ -258,6 +296,8 @@ def build_digest(conn: sqlite3.Connection, story_ids: list[int]) -> dict:
             items = _has_code_section(conn, story_ids)
         elif tag == "watchlist":
             items = _watchlist_section(conn, story_ids)
+        elif tag == "rising":
+            items = _rising_section(conn, story_ids)
         elif tag in _NO_SOURCE_SECTIONS:
             items = []
         else:

@@ -1,6 +1,6 @@
-"""Entry point for the 05:00 UTC `collect` workflow.
+"""Entry point for the `collect` workflow (every 3 days, ~6h after submit).
 
-Resolves the triage batch submit.py submitted three hours earlier, then runs
+Resolves the triage batch submit.py submitted earlier that day, then runs
 the rest of the pipeline: submit + poll summarize (bounded wait — it can't go
 out any earlier, it needs triage's scores), generate the brief, publish site
 data and send the email. Also resolves any pending dedupe-adjudication
@@ -50,8 +50,9 @@ def main() -> None:
         else:
             results = triage.collect(conn, triage_handle)
             if results is None:
-                print("[collect] triage batch not finished yet — aborting, retry next collect run")
-                return
+                # Exit non-zero: a green run with no digest hides the miss.
+                # Re-run collect by hand (workflow_dispatch) once it lands.
+                sys.exit("[collect] triage batch not finished yet — no digest published")
 
         story_ids = embed.todays_story_ids(conn)
         if not story_ids:

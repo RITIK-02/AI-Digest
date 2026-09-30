@@ -15,7 +15,7 @@ from pathlib import Path
 import yaml
 
 from src.models import Item, RawItem
-from src.sources import arxiv
+from src.sources import arxiv, hn
 from src.sources.base import extract_identifiers
 
 CONFIG_PATH = Path(__file__).resolve().parents[2] / "config" / "sources.yaml"
@@ -23,6 +23,7 @@ CONFIG_PATH = Path(__file__).resolve().parents[2] / "config" / "sources.yaml"
 # New sources register here as they're added — see CLAUDE.md "Source notes".
 SOURCE_MODULES = {
     "arxiv": arxiv,
+    "hn": hn,
 }
 
 

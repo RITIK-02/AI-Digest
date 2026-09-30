@@ -26,9 +26,11 @@ providers:
     # gpt-5-nano, not gpt-5-mini: as of 2026-09-26 OpenRouter no longer
     # offers a :batch endpoint for gpt-5-mini or gpt-5 (400 "does not have a
     # :batch endpoint"). nano is the cheapest GPT-5 model it still batches.
-    # mid_tier below has the same problem and currently can't batch either.
+    # mid_tier is Sonnet 5.5 for the same reason: openai/gpt-5 lost its
+    # :batch endpoint, and a fallback that can't submit is no fallback.
+    # Confirmed :batch variant on OpenRouter 2026-10-01.
     cheapest_tier: "openai/gpt-5-nano-2025-08-07"
-    mid_tier: "openai/gpt-5"
+    mid_tier: "anthropic/claude-sonnet-5.5"
 
 routing:
   dedupe_adjudication:
@@ -37,9 +39,11 @@ routing:
   triage:
     primary: { provider: openrouter, tier: cheapest_tier }
     fallback: { provider: anthropic, tier: cheapest_tier }
+  # Cheapest tier by choice (2026-10-01): ~$0.0014/run on nano vs ~$0.04 on
+  # Sonnet 5.5. Brief stays mid tier — it's the product.
   summarize:
-    primary: { provider: anthropic, tier: mid_tier }
-    fallback: { provider: openrouter, tier: mid_tier }
+    primary: { provider: openrouter, tier: cheapest_tier }
+    fallback: { provider: anthropic, tier: cheapest_tier }
   brief:
     primary: { provider: anthropic, tier: mid_tier }
     fallback: { provider: openrouter, tier: mid_tier }

@@ -218,9 +218,14 @@ def run(conn: sqlite3.Connection) -> list[int]:
         now = datetime.now(UTC).isoformat()
         for _root, member_ids in uf.groups().items():
             members = [by_id[i] for i in member_ids]
-            # Canonical = the one with an arxiv_id if any, else earliest fetched.
-            canonical = next((m for m in members if m["arxiv_id"]), None) or min(
-                members, key=lambda m: m["fetched_at"]
+            # Canonical = the paper itself when one's in the cluster (e.g. an
+            # HN thread linking to an arXiv paper attaches as discussion, not
+            # canonical — "usually the paper" per CLAUDE.md's data model),
+            # else any item with an arxiv_id, else earliest fetched.
+            canonical = (
+                next((m for m in members if m["source"] == "arxiv"), None)
+                or next((m for m in members if m["arxiv_id"]), None)
+                or min(members, key=lambda m: m["fetched_at"])
             )
             cur = conn.execute(
                 "INSERT INTO stories (canonical_item_id, created_at) VALUES (?, ?)",
