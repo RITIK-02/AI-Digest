@@ -55,6 +55,31 @@ RESULT_SCHEMA = {
 }
 
 
+_B36 = "0123456789abcdefghijklmnopqrstuvwxyz"
+
+
+def _to_b36(n: int) -> str:
+    out = ""
+    while True:
+        n, r = divmod(n, 36)
+        out = _B36[r] + out
+        if n == 0:
+            return out
+
+
+def encode_custom_id(item_ids: list[int]) -> str:
+    """custom_id must fit [A-Za-z0-9_-]{1,64} (see LLMRequest). Ten decimal
+    ids overflow 64 chars once ids pass 5 digits; base36 keeps ten ids
+    under 64 until ids pass ~1.7M."""
+    return "triage-" + "_".join(_to_b36(i) for i in item_ids)
+
+
+def decode_custom_id(custom_id: str) -> list[int]:
+    if custom_id.startswith("triage:"):  # pre-2026-10-06 format, batches still in flight
+        return [int(x) for x in custom_id.split(":", 1)[1].split(",")]
+    return [int(x, 36) for x in custom_id.split("-", 1)[1].split("_")]
+
+
 def _taxonomy_text() -> str:
     with open(TAXONOMY_PATH, encoding="utf-8") as f:
         taxonomy = yaml.safe_load(f)
@@ -102,7 +127,7 @@ def submit(conn: sqlite3.Connection, story_ids: list[int]) -> BatchHandle | None
         prompt = template.format(
             interest_profile=interest_profile, taxonomy=taxonomy, items=items_text
         )
-        custom_id = "triage:" + ",".join(str(row["id"]) for row in batch)
+        custom_id = encode_custom_id([row["id"] for row in batch])
         requests.append(LLMRequest(custom_id=custom_id, prompt=prompt, json_schema=RESULT_SCHEMA))
 
     handle = submit_stage_batch("triage", requests, conn)
@@ -130,7 +155,7 @@ def collect(
     for response in result:
         record_and_check(conn, response.cost)
 
-        item_ids = [int(x) for x in response.custom_id.split(":", 1)[1].split(",")]
+        item_ids = decode_custom_id(response.custom_id)
         entries = (response.parsed or {}).get("results", [])
         per_item_cost = response.cost.usd / max(len(entries), 1)
 

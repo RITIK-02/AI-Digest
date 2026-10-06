@@ -176,7 +176,7 @@ def _adjudicate(
         )
         requests.append(
             LLMRequest(
-                custom_id=f"{a}:{b}",
+                custom_id=f"{a}-{b}",
                 prompt=prompt,
                 json_schema=DedupeAdjudication.model_json_schema(),
             )
@@ -275,7 +275,8 @@ def collect_adjudications(conn: sqlite3.Connection) -> int:
             continue
 
         for response in result:
-            a_id, b_id = (int(x) for x in response.custom_id.split(":"))
+            # ":" is the pre-2026-10-06 separator, kept for batches still in flight.
+            a_id, b_id = (int(x) for x in response.custom_id.replace(":", "-").split("-"))
             if not (response.parsed or {}).get("same_story"):
                 continue
             story_a = conn.execute(

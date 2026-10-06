@@ -6,9 +6,9 @@ name: collect
 # workflow still builds the site itself first so a broken build fails the
 # workflow loudly instead of silently reaching Pages.
 #
-# Same days as submit.yml, ~6.5h later. Must stay on the same UTC date as
-# submit — "today's candidates" are keyed by UTC run date. The wide gap
-# absorbs GitHub's cron delay and gives the triage batch time to finish.
+# Same days as submit.yml, ~6.5h later. The wide gap absorbs GitHub's cron
+# delay and gives the triage batch time to finish. Collect works off the
+# latest submit's candidates, so a failed run can be re-run any later day.
 on:
   schedule:
     - cron: "43 7 */3 * *"

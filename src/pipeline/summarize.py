@@ -64,7 +64,7 @@ def submit(conn: sqlite3.Connection, story_ids: list[int]) -> BatchHandle | None
     template = PROMPT_PATH.read_text(encoding="utf-8")
     requests = [
         LLMRequest(
-            custom_id=f"summarize:{row['id']}",
+            custom_id=f"summarize-{row['id']}",
             prompt=template.format(title=row["title"], abstract=row["abstract"][:4000]),
             json_schema=RESULT_SCHEMA,
         )
@@ -95,7 +95,8 @@ def collect(
     for response in result:
         record_and_check(conn, response.cost)
 
-        item_id = int(response.custom_id.split(":", 1)[1])
+        # ":" is the pre-2026-10-06 separator, kept for batches still in flight.
+        item_id = int(response.custom_id.replace(":", "-").split("-", 1)[1])
         row = conn.execute("SELECT content_hash FROM items WHERE id = ?", (item_id,)).fetchone()
         if row is None:
             continue

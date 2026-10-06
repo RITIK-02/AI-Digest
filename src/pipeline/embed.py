@@ -112,11 +112,16 @@ def run(conn: sqlite3.Connection, limit: int | None = None) -> list[int]:
 
 
 def todays_story_ids(conn: sqlite3.Connection, run_date: str | None = None) -> list[int]:
-    """Recover the set of story ids that survived today's prefilter — the
+    """Recover the set of story ids that survived the latest prefilter — the
     single source of truth for "today's candidates," used by every later
     stage (triage, summarize, brief, publish) so a high scorer from last
-    week doesn't keep winning a slot forever."""
-    run_date = run_date or datetime.now(UTC).date().isoformat()
+    week doesn't keep winning a slot forever.
+
+    Defaults to the most recent run_date, not the wall-clock date, so a
+    failed collect can be re-run by hand on a later day."""
+    if run_date is None:
+        row = conn.execute("SELECT MAX(run_date) AS d FROM considered_items").fetchone()
+        run_date = row["d"] if row and row["d"] else datetime.now(UTC).date().isoformat()
     rows = conn.execute(
         """
         SELECT s.id FROM considered_items ci

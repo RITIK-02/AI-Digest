@@ -64,7 +64,7 @@ def generate(conn: sqlite3.Connection, story_ids: list[int]) -> Brief | None:
     )
     prompt = template.format(stories=stories_text)
 
-    handle = submit_stage_batch("brief", [LLMRequest(custom_id="brief:today", prompt=prompt)], conn)
+    handle = submit_stage_batch("brief", [LLMRequest(custom_id="brief", prompt=prompt)], conn)
     client = get_client_for_batch(handle)
     result = poll_until_done(client, handle, MAX_WAIT_SECONDS, POLL_INTERVAL_SECONDS)
 

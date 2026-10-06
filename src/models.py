@@ -140,7 +140,9 @@ class LLMRequest(BaseModel):
     """One request inside a batch. custom_id round-trips through both vendors'
     batch APIs so responses can be matched back to their source item."""
 
-    custom_id: str
+    # Intersection of the vendors' rules: Anthropic (direct or via
+    # OpenRouter) rejects anything outside [A-Za-z0-9_-] or over 64 chars.
+    custom_id: str = Field(pattern=r"^[A-Za-z0-9_-]{1,64}$")
     prompt: str
     system_prompt: str = ""
     json_schema: dict[str, Any] | None = None
