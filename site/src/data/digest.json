@@ -1,28 +1,14 @@
 {
-  "date": "2026-10-13",
+  "date": "2026-10-16",
   "brief": {
-    "run_date": "2026-10-13",
+    "run_date": "2026-10-16",
     "provider": "openrouter",
     "model": "anthropic/claude-sonnet-5.5",
-    "content_md": "**The theme today is whether security and eval numbers can be trusted.** The most useful read is the reproducibility audit of LLM/agent vulnerability-validation artifacts (2608.09567). Of 104 papers, 59 had reachable artifacts. Only 10 of 18 workflows ran end-to-end, and 58 of 102 anchor cases had CVE IDs that disagreed with their directory labels. The embedded oracles are the worst part: 20 of 30 patched counterfactuals still fired, giving 60% sensitivity and 45% specificity. A vulnerable-build trigger is not CVE-specific evidence without a clean patched control. The paper's pre-registered protocol is worth stealing for your own harnesses.\n\n**The TSFM side has the same problem.** LiveHouse-TS (2608.17299) uses prequential testing on real future data, and model rankings from static benchmarks reshuffle substantially under it. A cost-aware industrial-monitoring study (2608.22968) agrees. Under frozen zero-shot use, TSFMs win on some tasks (TimesFM on BDG2) and lose to TCN-AE or OCSVM on others, while costing more in latency and memory. Related: the \"LLM writes your anomaly detector\" paper (2610.01223) evolves a compact, GPU-free NumPy detector that beats classical, deep and foundation-model baselines on TSB-AD. For architecture, HART (2610.12883) is a hybrid attention-RWKV model that fixes long-horizon decay and reaches long-horizon MASE comparable to Toto-2.0-1B at 36M parameters.\n\n**Agent supply chain and prompt injection keep producing larger numbers.** ElasticBack (2608.09577) is a weight-free backdoor where a malicious rule in a skill document fires only when a benign-looking trigger appears in the query. It reports high ASR with near-zero FPR and evades deployment-time defenses. SkillsMetric (2608.08468) is the defensive counterpart: static analysis reaches AUC 0.93 but catches 0% of host-destruction via ordinary shell commands and only 42% of prompt injection. On the measurement side, COPEX (2610.04378) reports a 64.4% mean ASR across MCP layers, and some client and transport attacks bypass the model entirely. Mechanistically, 2609.37737 finds that prompt-injection compliance sits in a compact late-layer subspace, and patching it reverses compliance in 77\u201392% of cases. That makes it a plausible monitoring site.\n\n**On backdoor defense, two training-free removal papers landed together.** NEEDLE (2610.00348)",
-    "cost_usd": 0.083416,
-    "created_at": "2026-10-13T15:31:21.881657+00:00"
+    "content_md": "The strongest thread today is evaluation distrust, so I'll start there.\n\nThe most useful paper for your LLM-security side is the [reproducibility audit of LLM/agent vulnerability-validation artifacts](http://arxiv.org/abs/2608.09567v1). Only 59 of 104 papers had reachable artifacts, and 10 of 18 workflows ran end to end. Of the 102 anchor cases, 58 had internal CVE IDs that disagreed with their directory labels. The embedded oracles had 60% sensitivity and 45% specificity, with 20 of 30 patched counterfactuals still firing. The point to take away is that a vulnerable-build trigger is not CVE-specific evidence without a clean patched control. The same attitude shows up on the time-series side in [LiveHouse-TS](http://arxiv.org/abs/2608.17299v1), a prequential benchmark on real future data. Its headline is that TSFM rankings from static benchmarks reshuffle substantially under the live protocol. A [cost-aware industrial monitoring study](http://arxiv.org/abs/2608.22968v1) finds similarly deflating results: TCN-AE and OCSVM beat MOMENT on two of three tasks, and TimesFM 2.5 wins only on the BDG2 forecasting and diagnostics task. A [financial-news audit](http://arxiv.org/abs/2608.17223v1) shows random splits inflating MCC by 1.1\u20136.5\u00d7, which is worth keeping in mind whenever someone reports a temporal benchmark gain.\n\nOn agent supply chain, [ElasticBack](http://arxiv.org/abs/2608.09577v1) is a weight-free conditional backdoor. A malicious rule in a skill document fires only when a benign-looking trigger appears in the user query. The authors report high ASR with near-zero FPR and evasion of deployment-time defenses. [SkillsMetric](http://arxiv.org/abs/2608.08468v1) is the defensive counterpart, and it is candid about limits. Its static analysis reaches AUC 0.93 and catches 93% of exfiltration, but it detects 0% of host destruction via common shell commands and only 42% of prompt injection. Together they suggest the stealthy cases are exactly where static screening is weakest.\n\nFor prompt injection measurement, [COPEX](http://arxiv.org/ab",
+    "cost_usd": 0.077312,
+    "created_at": "2026-10-16T13:02:59.286416+00:00"
   },
   "stories": [
-    {
-      "title": "Where Do LLMs Decide to Break the Rules? Mechanistic Localization of Prompt Injection Compliance",
-      "url": "http://arxiv.org/abs/2609.37737v1",
-      "summary": "Attack information is linearly decodable from the first layer, but causal leverage over the model's behavior is negligible until a late-layer bottleneck in the final third of the network. Patching this bottleneck reverses compliance in 77\u201392% of cases. The compliance mechanism occupies a compact linear subspace (rank-8 in 4B and 14B models, scaling to rank-64 at 32B) and is architecturally stable across model families, with the late-layer bottleneck also being the representationally optimal site for detecting attacks, outperforming early-layer classifiers under obfuscation.",
-      "why_it_matters": "Connects mechanistic localization of prompt-injection compliance to actionable intervention points and robust detection in large models, relevant to time-series LLMs where late-stage decision bottlenecks can govern policy adherence.",
-      "score": 6.0,
-      "reason": "Item 0 discusses memory-learning adapters vs data scarcity for DSAs; relevant to practical robustness and cross-domain transfer in TSFM contexts.",
-      "slot": "relevance",
-      "sections": [
-        "tsfm",
-        "evaluation",
-        "adversarial-ml"
-      ]
-    },
     {
       "title": "From Runnable to Verifiable: An Independent Reproducibility Study of LLM/Agent-Driven Vulnerability Validation Artifacts",
       "url": "http://arxiv.org/abs/2608.09567v1",
@@ -50,6 +36,20 @@
         "llm-security",
         "agents",
         "adversarial-ml",
+        "evaluation"
+      ]
+    },
+    {
+      "title": "Amortized Off-Policy Evaluation for LLMs",
+      "url": "http://arxiv.org/abs/2610.10848v1",
+      "summary": "PFN-OPE is a prior-data fitted network designed for amortized off-policy evaluation of LLMs under continual deployment. It pretrains on tasks derived from a pool of LLM responses scored by multiple reward functions, incorporating both policy shift and reward shift in the data. At test time, it maps a logged dataset and one sampled target response per prompt to a value estimate in a single forward pass, with no per-task fitting, and shows 2.0 to 9.3\u00d7 lower error than the best baselines across HelpSteer2 and UltraFeedback evaluations with Qwen, Llama, and Gemma policies under reward-shifted settings.",
+      "why_it_matters": "Directly tackles OPE under continual deployment and reward shifts, offering amortized adaptation that aligns with practical evaluation workflows in LLM security and deployment pipelines.",
+      "score": 6.0,
+      "reason": "Governance of persistent memory in LLM agents affects security (leakage, leakage leakage) and evaluation of agent behavior.",
+      "slot": "relevance",
+      "sections": [
+        "agents",
+        "llm-security",
         "evaluation"
       ]
     },
@@ -142,34 +142,6 @@
       ]
     },
     {
-      "title": "Measuring Task-Agnostic Training Data Influence Across Language Model Pretraining",
-      "url": "http://arxiv.org/abs/2608.13515v1",
-      "summary": "The paper introduces a task-agnostic measure of training data influence that quantifies how much an example\u2019s gradient update reduces the squared distance to a run\u2019s final parameters, estimated from intermediate checkpoints without retraining. Applied to 18 Pythia and PolyPythia configurations, the method reveals systematic temporal shifts in influential data: literature-related data align more with the parameter trajectory early, while STEM data align more later. This qualitative crossover is broadly consistent across configurations, offering a tractable trajectory-level perspective that complements task-based influence analyses.",
-      "why_it_matters": "Gives a practical, retraining-free way to map which data sources steer pretraining trajectories over time, informing data curation, curriculum, and security-relevant provenance audits for LLMs.",
-      "score": 8.0,
-      "reason": "Proposes a task-agnostic measure of individual-example influence during LM pretraining which is highly relevant to data provenance, extraction/attribution, contamination, and training-time attack/defense analysis.",
-      "slot": "relevance",
-      "sections": [
-        "llm-security",
-        "adversarial-ml",
-        "evaluation"
-      ]
-    },
-    {
-      "title": "Proving the Utility of Large Language Models in Cybersecurity Simulations: A Comprehensive Examination",
-      "url": "http://arxiv.org/abs/2608.16422v1",
-      "summary": "The paper evaluates LLMs for cybersecurity simulations, using YAML to represent complex network configurations and to drive pipelines that support RL agent training. It compares LLM-based techniques to classical methods like Double Q-learning with PER, claiming improved efficiency, adaptability, and realism in cyberattack simulations. In benchmarks on multiple synthetic topologies, LLM-instantiated Python agents reached up to a 94.5% compromise rate and 0.02\u20130.06s per assessment, a ~25,000x\u201350,000x speedup over traditional RL cycles.",
-      "why_it_matters": "Shows LLM-driven generation/execution pipelines can massively accelerate cyber-sim training and evaluation, relevant to secure LLM autonomy and sim-to-real robustness for time-series/agentic models.",
-      "score": 8.0,
-      "reason": "Large-scale experimental evaluation of indirect prompt injection across channels and payloads maps closely to prompt-injection/jailbreak threat modeling and red-teaming methodology.",
-      "slot": "relevance",
-      "sections": [
-        "llm-security",
-        "agents",
-        "evaluation"
-      ]
-    },
-    {
       "title": "FedLNS: Leverage LayerNorm Signature Modeling to Mitigate Adversarial Manipulation in Federated LLMs",
       "url": "http://arxiv.org/abs/2608.18736v1",
       "summary": "The paper introduces FedLNS, a server-side framework that screens federated LLM client updates by modeling changes in trainable normalization-layer parameters as signatures and comparing them to a history-aware cross-client reference. It operates without additional client-to-server metadata, raw client data, trusted server datasets, labeled attack examples, or a separately trained detector, and retains full-model updates for standard or compatible aggregation after screening. Experiments on GPT-, BERT-, and LLaMA-style models trained from scratch with 200 clients show that under 40% target manipulation, FedLNS yields lower test perplexity than six baselines across IID and non-IID partitions.",
@@ -239,6 +211,20 @@
       ]
     },
     {
+      "title": "Priming Base Models for Agentic Post-Training: An Open Midtraining Recipe",
+      "url": "http://arxiv.org/abs/2610.22019v1",
+      "summary": null,
+      "why_it_matters": null,
+      "score": 8.0,
+      "reason": "Discusses agentic post-training and midtraining for LLMs\u2014highly relevant to agentic-security and evaluation of security implications in LLM pipelines.",
+      "slot": "relevance",
+      "sections": [
+        "llm-security",
+        "evaluation",
+        "longform"
+      ]
+    },
+    {
       "title": "Do All LLMs Know When They're Being Harmful? A Reproducibility Study of Latent-Space Safety Probes Across Model Families",
       "url": "http://arxiv.org/abs/2608.08029v1",
       "summary": "This study reproduces Khatri et al.\u2019s pipeline for training lightweight MLP probes on final-layer activations to detect harmful prompts, matching the original LLaMA-3.1-8B results within 0.37 F1 points (0.2 on BeaverTails). It extends the evaluation across Gemma-4-E4B, Mistral-7B-v0.3, and Qwen2-7B on WildJailbreak, BeaverTails, and AEGIS 2.0, finding F1 within about one point of the LLaMA-3.1-8B values using the same probe architecture. It also assesses nondeterminism by varying seeds and reports that final token latent vectors were invariant to seed across architectures.",
@@ -250,20 +236,6 @@
         "llm-security",
         "evaluation",
         "alignment"
-      ]
-    },
-    {
-      "title": "RouteGuard: Certifying Routing Gain in LLM Multi-Agent Systems When Complementarity Is Not Enough",
-      "url": "http://arxiv.org/abs/2608.07583v1",
-      "summary": "The paper shows that common assumptions for multi-agent LLM routing\u2014optimizing gate AUC and relying on advisor complementarity\u2014do not determine deployable gain, and introduces RouteGuard to certify routing benefit. It decomposes gain as G = \u03c0\u0394_E, identifies a conditional-regret functional \u03a6 as the governing quantity (not AUC), provides a finite-sample certification bracket with a matching Le Cam lower bound that is constant-sharp over the fixed-activity class, and observes a robustness phase transition. Experiments on RouterBench and OpenRCA demonstrate RouteGuard acting as a guardrail, certifying gain only under prompt-level sampling (not workload-cluster resampling) on RouterBench and refusing to certify on OpenRCA due to advisor redundancy, with pre-registered semi-synthetic controls confirming calibration thresholds.",
-      "why_it_matters": "It offers a principled, sample-sensitive certification of routing gain that can prevent illusory improvements in LLM multi-agent systems and aligns evaluation with deployment risk.",
-      "score": 7.0,
-      "reason": "Analyzes routing certification in LLM multi-advisor systems and provides finite-sample guarantees for when routing yields deployable gain\u2014relevant to safe agent composition, evaluation metrics beyond AUC, and deployment-risk assessment.",
-      "slot": "relevance",
-      "sections": [
-        "agents",
-        "llm-security",
-        "evaluation"
       ]
     },
     {
@@ -320,20 +292,6 @@
         "llm-security",
         "agents",
         "efficiency"
-      ]
-    },
-    {
-      "title": "No Free Efficiency: Revisiting the Trade-off Between Training Efficiency and Model Vulnerability",
-      "url": "http://arxiv.org/abs/2609.33898v1",
-      "summary": "Training efficiency strategies, including selective data sampling, efficient pre-training, and simplified RL pipelines, are explored for their impact on robustness. Across vision and language models, efficiency-oriented training is shown to increase susceptibility to adversarial and privacy attacks, with sharper loss geometry and systematic changes in internal representations. The study also analyzes zero RL training, finding greater catastrophic forgetting and overconfidence under simplified RL recipes, advocating for multi-objective training that balances performance, cost, and security.",
-      "why_it_matters": "Directly links efficiency gains to security/vulnerability concerns across domains, relevant to work on LLM security and time-series foundation models where efficiency-driven practices may affect robustness and privacy.",
-      "score": 7.0,
-      "reason": "Prompt injection red-teaming with curriculum RL directly targets frontier-model security and robustness evaluation.",
-      "slot": "relevance",
-      "sections": [
-        "llm-security",
-        "adversarial-ml",
-        "evaluation"
       ]
     },
     {
@@ -405,6 +363,20 @@
       ]
     },
     {
+      "title": "Divergent Paths: Learning an Outcome-Predictive Representation of LLM Agent Trajectories",
+      "url": "http://arxiv.org/abs/2610.19614v1",
+      "summary": null,
+      "why_it_matters": null,
+      "score": 7.0,
+      "reason": "Learning outcome-predictive representations of agent trajectories informs security evaluation of agent behavior and failure modes.",
+      "slot": "relevance",
+      "sections": [
+        "llm-security",
+        "adversarial-ml",
+        "evaluation"
+      ]
+    },
+    {
       "title": "FutureBridge: Token Selection Beyond Local Preference in Collaborative Decoding",
       "url": "http://arxiv.org/abs/2608.06819v1",
       "summary": "FutureBridge proposes a token reranking scheme for LLM\u2013SLM collaborative decoding that prioritizes tokens enabling the SLM\u2019s subsequent reasoning rather than the LLM\u2019s local preference. Training uses an answer-verified LLM trajectory to fix a shared future, while a frozen SLM assigns counterfactual scores to candidate tokens under this common context to supervise a lightweight reranker observing only the current state and token. At inference, the LLM only expands the candidate pool and the reranker selects a single token before handing generation back to the SLM without appending any future suffix, yielding a 35.1% relative Math Avg. improvement for Qwen3-1.7B across five math reasoning benchmarks over greedy decoding.",
@@ -429,20 +401,6 @@
       "sections": [
         "adversarial-ml",
         "llm-security"
-      ]
-    },
-    {
-      "title": "ProbGuard: Calibrated Safety Risk Estimation from LLM Output Distributions",
-      "url": "http://arxiv.org/abs/2608.10621v1",
-      "summary": "ProbGuard reframes LLM safety assessment as probabilistic risk estimation over the model\u2019s early output distribution rather than deterministic classification on completed token sequences. It estimates the probability of unsafe continuation via Monte Carlo over generated prefix distributions and calibrates this risk through post-training, enabling early stopping of unsafe generations. Empirically, it achieves the best calibration across nine model\u2013dataset settings (average Brier and ECE reduced by 79.6% and 71.9% vs. the best baseline) and caps jailbreak attack success to \u22641% after only the first ten decoding steps.",
-      "why_it_matters": "It operationalizes distribution-aware, early-stage safety control with strong calibration\u2014useful for red-teaming defenses, risk-sensitive deployment, and aligning with probabilistic guardrail research and time-series-style forecasting over generation trajectories.",
-      "score": 6.0,
-      "reason": "Proposes a novel metric (feature nonlocality) to assess abstraction level of learned features from sparse autoencoders; useful for mechanistic interpretability and evaluating claims about high-level features relevant to jailbreak/mechanistic work.",
-      "slot": "relevance",
-      "sections": [
-        "alignment",
-        "adversarial-ml",
-        "evaluation"
       ]
     },
     {
@@ -529,6 +487,20 @@
       ]
     },
     {
+      "title": "Where Do LLMs Decide to Break the Rules? Mechanistic Localization of Prompt Injection Compliance",
+      "url": "http://arxiv.org/abs/2609.37737v1",
+      "summary": "Attack information is linearly decodable from the first layer, but causal leverage over the model's behavior is negligible until a late-layer bottleneck in the final third of the network. Patching this bottleneck reverses compliance in 77\u201392% of cases. The compliance mechanism occupies a compact linear subspace (rank-8 in 4B and 14B models, scaling to rank-64 at 32B) and is architecturally stable across model families, with the late-layer bottleneck also being the representationally optimal site for detecting attacks, outperforming early-layer classifiers under obfuscation.",
+      "why_it_matters": "Connects mechanistic localization of prompt-injection compliance to actionable intervention points and robust detection in large models, relevant to time-series LLMs where late-stage decision bottlenecks can govern policy adherence.",
+      "score": 6.0,
+      "reason": "Item 0 discusses memory-learning adapters vs data scarcity for DSAs; relevant to practical robustness and cross-domain transfer in TSFM contexts.",
+      "slot": "relevance",
+      "sections": [
+        "tsfm",
+        "evaluation",
+        "adversarial-ml"
+      ]
+    },
+    {
       "title": "Generalist Representation, Specialist Detection: TS-Router for Time-Series Anomaly Detection",
       "url": "http://arxiv.org/abs/2610.00978v1",
       "summary": "TS-Router proposes a framework that uses foundation-model representations to coordinate specialized anomaly detectors for time-series anomaly detection (TSAD), rather than enforcing a single universal anomaly score. It estimates the relative competence of heterogeneous detectors from pretrained temporal representations and selects suitable specialists for each target series, deriving soft competence supervision from specialists\u2019 relative performance on labeled simulated tasks to avoid real-task labels. At deployment, routing requires no target anomaly labels, and only the selected specialists are trained unsupervised on the target series, with Top-k set-competence regret bounded by representation coverage and conditional competence stability, demonstrating strong performance across 16 real-world benchmarks and four metrics, supported by ablations with multiple frozen TSFM encoders.",
@@ -552,20 +524,6 @@
       "sections": [
         "tsfm",
         "evaluation"
-      ]
-    },
-    {
-      "title": "LightMTP: Lightweight Latent Multi-Token Prediction",
-      "url": "http://arxiv.org/abs/2610.06031v1",
-      "summary": "LightMTP proposes a lightweight latent multi-token prediction objective to extend supervision beyond the immediate next token without large parameter increases or external helper models. It bootstraps future token representations from the model\u2019s own hidden states and introduces two variants that predict more future tokens with no significant computational overhead compared to conventional MTP. The approach adds at most 1% extra parameters while maintaining strong performance on general language modeling benchmarks and achieving gains in planning, coding, and reasoning tasks.",
-      "why_it_matters": "It offers a parameter-efficient path to multi-token prediction that aligns with latent supervision ideas and avoids external encoders, potentially improving long-horizon structure capture in LLMs and time-series foundation models.",
-      "score": 6.0,
-      "reason": "Lightweight latent multi-token prediction; efficiency/architecture angle for next-token and multi-token forecasting in TS models.",
-      "slot": "relevance",
-      "sections": [
-        "tsfm",
-        "evaluation",
-        "has-code"
       ]
     },
     {
@@ -611,20 +569,6 @@
       ]
     },
     {
-      "title": "Amortized Off-Policy Evaluation for LLMs",
-      "url": "http://arxiv.org/abs/2610.10848v1",
-      "summary": "PFN-OPE is a prior-data fitted network designed for amortized off-policy evaluation of LLMs under continual deployment. It pretrains on tasks derived from a pool of LLM responses scored by multiple reward functions, incorporating both policy shift and reward shift in the data. At test time, it maps a logged dataset and one sampled target response per prompt to a value estimate in a single forward pass, with no per-task fitting, and shows 2.0 to 9.3\u00d7 lower error than the best baselines across HelpSteer2 and UltraFeedback evaluations with Qwen, Llama, and Gemma policies under reward-shifted settings.",
-      "why_it_matters": "Directly tackles OPE under continual deployment and reward shifts, offering amortized adaptation that aligns with practical evaluation workflows in LLM security and deployment pipelines.",
-      "score": 6.0,
-      "reason": "Governance of persistent memory in LLM agents affects security (leakage, leakage leakage) and evaluation of agent behavior.",
-      "slot": "relevance",
-      "sections": [
-        "agents",
-        "llm-security",
-        "evaluation"
-      ]
-    },
-    {
       "title": "STAPLE: Static Sparse Upcycling of Pretrained Checkpoints via Embedding Modules",
       "url": "http://arxiv.org/abs/2610.12599v1",
       "summary": "STAPLE builds on STEM to integrate static sparse memory into pretrained models by retaining FFN up-projections and adding token-embedded representations as a residual pathway, enabling token-specific information to be learned without discarding pretrained computation. On OLMo-2 1B and 7B backbones, STAPLE yields performance improvements over continued dense training (e.g., +4.27 on HumanEval, +2.80 MBPP, +2.27 GSM8K, +1.65 DROP in 1B) and outperforms static sparse baselines and an Engram-style model, while decoding 2x faster with less than half the GPU model memory and measured GPU energy per token in throughput-oriented decoding. Despite introducing billions of parameters late in training, the host-offloaded implementation maintains generation throughput within 1.5% and training throughput within 3% of the dense baseline by caching only ~5% of the most frequent embeddings on GPU, suggesting static sparse memory as a sample-efficient, scalable path for expanding pretrained models without sparse pretraining from scratch.",
@@ -635,6 +579,33 @@
       "sections": [
         "tsfm",
         "efficiency",
+        "evaluation"
+      ]
+    },
+    {
+      "title": "TreeSpark: Learning to Draft the Trees You Verify for Speculative Decoding",
+      "url": "http://arxiv.org/abs/2610.20175v1",
+      "summary": null,
+      "why_it_matters": null,
+      "score": 6.0,
+      "reason": "TreeSpark deals with speculative decoding and training/inference efficiency for sequence models; tangential relevance to TSFM architectures and evaluation.",
+      "slot": "relevance",
+      "sections": [
+        "tsfm",
+        "evaluation"
+      ]
+    },
+    {
+      "title": "StableJudge: A Lightweight Adversarial Defense Framework for LLM-as-a-Judge",
+      "url": "http://arxiv.org/abs/2610.16814v1",
+      "summary": null,
+      "why_it_matters": null,
+      "score": 6.0,
+      "reason": "StableJudge proposes defenses for LLM-as-a-Judge against prompt-injection-based score hijacking; relevant to evaluation security.",
+      "slot": "relevance",
+      "sections": [
+        "llm-security",
+        "adversarial-ml",
         "evaluation"
       ]
     },
@@ -805,20 +776,6 @@
       ]
     },
     {
-      "title": "GNA: Granular Neighbor Assembly for Retrieval-Augmented Multivariate Time-Series Forecasting",
-      "url": "http://arxiv.org/abs/2609.36281v1",
-      "summary": null,
-      "why_it_matters": null,
-      "score": 5.0,
-      "reason": "Item 3 explores mid-training compute allocation for LLMs, with potential implications for security-focused training efficiency and evaluation.",
-      "slot": "relevance",
-      "sections": [
-        "llm-security",
-        "agents",
-        "evaluation"
-      ]
-    },
-    {
       "title": "LLM2Jev: LLMs Are Already Jev-Style Decision Models -- When and How to Fine-Tune Them",
       "url": "http://arxiv.org/abs/2610.02076v1",
       "summary": null,
@@ -915,6 +872,47 @@
       ]
     },
     {
+      "title": "TurboMamba: Faster Inference, Faster Training, and Better Prediction with Lexical Memory",
+      "url": "http://arxiv.org/abs/2610.20682v1",
+      "summary": null,
+      "why_it_matters": null,
+      "score": 5.0,
+      "reason": "TurboMamba focuses on inference/training efficiency and token prediction; applicable to TSFM efficiency considerations but not core security.",
+      "slot": "relevance",
+      "sections": [
+        "efficiency",
+        "tsfm"
+      ]
+    },
+    {
+      "title": "AutoSec-RAN: Specification-Grounded LLM Fine-Tuning for Automated Security Analysis of O-RAN",
+      "url": "http://arxiv.org/abs/2610.15995v1",
+      "summary": null,
+      "why_it_matters": null,
+      "score": 5.0,
+      "reason": "AutoSec-RAN applies specification-grounded LLMs for automated security analysis of O-RAN; intersects LLM security evaluation and defense.",
+      "slot": "relevance",
+      "sections": [
+        "llm-security",
+        "evaluation",
+        "adversarial-ml"
+      ]
+    },
+    {
+      "title": "When Does Trust Help? A Leakage-Free Evaluation of Representation- and Aggregation-Based Defenses Against Backdoors in Federated Intrusion Detection",
+      "url": "http://arxiv.org/abs/2610.14767v1",
+      "summary": null,
+      "why_it_matters": null,
+      "score": 5.0,
+      "reason": "Leakage-free evaluation of defenses against backdoors in federated intrusion detection aligns with evaluation robustness and security evaluation.",
+      "slot": "relevance",
+      "sections": [
+        "adversarial-ml",
+        "evaluation",
+        "llm-security"
+      ]
+    },
+    {
       "title": "Cross-Corpus Evaluation of Generalizable Vulnerability Detection in IoT Firmware",
       "url": "http://arxiv.org/abs/2608.11492v1",
       "summary": "The paper introduces IoTVulBench, a human-verified, contamination-screened benchmark for cross-corpus IoT firmware vulnerability detection, and evaluates five model architectures, two tuning methods, and three curriculum strategies with ensemble, distillation, and robustness analyses. Models trained on IoTVulBench outperform matched single-source datasets (MCC 0.58 vs. 0.44 for PrimeVul and 0.39 for D2A), with staged curriculum learning raising MCC to 0.69 and a diversity-optimized ensemble reaching 0.73, surpassing a static analyzer (0.31) and PrimeVul by large margins while maintaining 86% performance under identifier renaming and showing strong calibration and largely faithful explanations. At a 0.5% FPR, the model missed 21% of vulnerabilities versus 71% for the strongest comparator, indicating domain-matched data and curriculum design\u2014not model scale alone\u2014drive generalization in firmware vulnerability detection.",
@@ -982,17 +980,16 @@
       ]
     },
     {
-      "title": "Efficient Multimodal Inference through Adaptive Acquisition and Sequential Fusion",
-      "url": "http://arxiv.org/abs/2610.07466v1",
+      "title": "CT0: Cybersecurity Transformer",
+      "url": "http://arxiv.org/abs/2610.16550v1",
       "summary": null,
       "why_it_matters": null,
       "score": 4.0,
-      "reason": "Active feature acquisition evaluation from offline data relates to evaluation methodology and robustness in tabular TSFM contexts.",
+      "reason": "CT0/CT0-Micro cybersecurity transformer focuses on small security-oriented models; modest relevance to security-oriented TSFM and policy implications.",
       "slot": "relevance",
       "sections": [
-        "tsfm",
-        "evaluation",
-        "adversarial-ml"
+        "policy",
+        "model-releases"
       ]
     }
   ],
@@ -1014,6 +1011,19 @@
             "agents",
             "evaluation",
             "longform"
+          ]
+        },
+        {
+          "title": "Removing the NEEDLE in the Haystack: Backdoor Removal in LLMs via Weight Orthogonalisation",
+          "url": "http://arxiv.org/abs/2610.00348v1",
+          "summary": "NEEDLE is a training-free method for targeted backdoor removal in LLMs that first identifies a backdoor trigger, then estimates a backdoor direction and a refusal subspace via activation vectors. It then applies sequential weight orthogonalisation to suppress the backdoor while preserving refusal-related representations, avoiding reliance on a clean reference model or original poisoned training data. Evaluated across model families and attack types, NEEDLE achieves the lowest mean Attack Success Rate among the defences, including 0% on code injection attacks, and induces the smallest KL divergence with minimal impacts on capability and safety.",
+          "why_it_matters": "Offers a training-free, targeted backdoor removal approach that preserves functional safety/capability, aligning with practical needs in LLM security and model integrity without requiring original poisoned data or clean references.",
+          "score": 8.0,
+          "reason": "Proposes training-free backdoor removal (NEEDLE) with weight orthogonalisation, relevant to defense and robustness of LLMs.",
+          "slot": "relevance",
+          "sections": [
+            "llm-security",
+            "adversarial-ml"
           ]
         },
         {
@@ -1043,21 +1053,6 @@
             "llm-security",
             "evaluation",
             "model-releases"
-          ]
-        },
-        {
-          "title": "Backdoor Purification for LoRA-Tuned LLMs via Null-Space Projection",
-          "url": "http://arxiv.org/abs/2610.00685v1",
-          "summary": "The work addresses backdoor purification for LoRA-tuned LLMs without relying on triggers, clean references, or post-hoc retraining of suspect parameters. It proposes extracting high-fidelity backdoor directions and projecting LoRA updates onto orthogonal null spaces in both input and output channels per layer/head, thereby purifying the model. Empirically, null-space projection reduces attack success rate from ~100% to <10% while preserving the base model's capabilities and the adapter\u2019s downstream skills.",
-          "why_it_matters": "Directly targets backdoor mitigation in PEFT-enabled LLMs with no-retraining requirements, aligning with practical security controls for LoRA-tuned systems.",
-          "score": 9.0,
-          "reason": "Directly addresses backdoor purification/removal in LLMs and LoRA/PEFT contexts, a core security topic with practical defense implications.",
-          "slot": "relevance",
-          "sections": [
-            "llm-security",
-            "adversarial-ml",
-            "evaluation",
-            "policy"
           ]
         }
       ],
@@ -1147,6 +1142,20 @@
           ]
         },
         {
+          "title": "Quantifying Behavioral Tails in Black-Box Language Models",
+          "url": "http://arxiv.org/abs/2609.33638v1",
+          "summary": "RareTrap introduces a framework for estimating the probability of severe behaviors in black box LLMs by using a surrogate LLM to create a geometry-aware mapping from a low-dimensional latent reference space into token embeddings, thereby inducing a tractable and reproducible input prompt distribution. A response-level performance function quantifies behavior severity, enabling sequential rare event simulation that focuses evaluations on progressively more severe behaviors while preserving the induced prompt distribution. Evaluations on 10 open-weight and two frontier models (GPT-5.4 and Claude Sonnet 4.6) show that RareTrap can induce severe resource consumption behaviors and compute their probability with as few as 200 evaluations, offering a principled approach for model developers to assess safety under a common distribution and prioritize alignment efforts.",
+          "why_it_matters": "Provides a principled, probability-grounded method to quantify rare, severe behaviors in black-box LLMs, relevant for time-series foundation models and security-focused ML research.",
+          "score": 6.0,
+          "reason": "Item 6 discusses time series foundation models with inference-time guidance and ensembling, relevant to TSFM and evaluation/robustness considerations.",
+          "slot": "relevance",
+          "sections": [
+            "tsfm",
+            "evaluation",
+            "adversarial-ml"
+          ]
+        },
+        {
           "title": "LLM-based Agents for Forecasting and Prediction: Methods, Training, Evaluation, and Applications",
           "url": "http://arxiv.org/abs/2608.23058v1",
           "summary": "The paper surveys LLM-based forecasting agents, organizing architectures into standalone LLM workflows over temporal inputs, tool/retrieval-augmented agents, and hybrids with statistical or foundation models. It reviews training and evaluation practices and highlights negative evidence such as sensitivity to small perturbations, ablations showing no accuracy gains from the LLM, and potential benchmark contamination confounding temporal reasoning claims. Applications span finance, weather, health, energy, and operations, with the core limitation identified as measurement, motivating needs for robust calibration under shift, contamination-resistant live evaluation, explicit cost\u2013accuracy reporting, and methods addressing forecast-induced feedback effects.",
@@ -1173,19 +1182,6 @@
             "evaluation",
             "longform"
           ]
-        },
-        {
-          "title": "DataSense-Bench: The First Step Toward an AI Scientist",
-          "url": "http://arxiv.org/abs/2610.12190v1",
-          "summary": "DataSense-Bench investigates whether frontier AI models can reliably select data for training by tackling data selection and performance forecasting in ML. The study allows AI agents to inspect data, generate/run analysis code, and execute model forward passes to choose and rank candidate training subsets, which are then used to fine-tune a small LLM and evaluated under a standardized protocol. The benchmark uses OpenThoughts-Agent and EnvScaler trajectories (TBLite and BFCL evaluations) to assess post-training performance of top-ranked subsets and ranking accuracy, reporting limited selection gains over random choice and inconsistent ranking across tasks, with agents often relying on similar data signals but interpreting training value differently.",
-          "why_it_matters": "Directly relevant to data-centric ML and AI system evaluation, linking data selection quality to post-training impact and ranking reliability in LLM fine-tuning scenarios.",
-          "score": 7.0,
-          "reason": "Introduces a multivariate time-series foundation model with primitive-based pretraining\u2014core to TSFM and generalization across domains.",
-          "slot": "relevance",
-          "sections": [
-            "tsfm",
-            "longform"
-          ]
         }
       ],
       "unavailable_reason": null
@@ -1206,20 +1202,6 @@
             "llm-security",
             "evaluation",
             "alignment"
-          ]
-        },
-        {
-          "title": "ProbGuard: Calibrated Safety Risk Estimation from LLM Output Distributions",
-          "url": "http://arxiv.org/abs/2608.10621v1",
-          "summary": "ProbGuard reframes LLM safety assessment as probabilistic risk estimation over the model\u2019s early output distribution rather than deterministic classification on completed token sequences. It estimates the probability of unsafe continuation via Monte Carlo over generated prefix distributions and calibrates this risk through post-training, enabling early stopping of unsafe generations. Empirically, it achieves the best calibration across nine model\u2013dataset settings (average Brier and ECE reduced by 79.6% and 71.9% vs. the best baseline) and caps jailbreak attack success to \u22641% after only the first ten decoding steps.",
-          "why_it_matters": "It operationalizes distribution-aware, early-stage safety control with strong calibration\u2014useful for red-teaming defenses, risk-sensitive deployment, and aligning with probabilistic guardrail research and time-series-style forecasting over generation trajectories.",
-          "score": 6.0,
-          "reason": "Proposes a novel metric (feature nonlocality) to assess abstraction level of learned features from sparse autoencoders; useful for mechanistic interpretability and evaluating claims about high-level features relevant to jailbreak/mechanistic work.",
-          "slot": "relevance",
-          "sections": [
-            "alignment",
-            "adversarial-ml",
-            "evaluation"
           ]
         }
       ],
@@ -1424,12 +1406,12 @@
       "description": "New model weights or major model announcements from labs.",
       "items": [
         {
-          "title": "Measure, Don't Optimize: Forecasting Recovery in LLM Unlearning",
-          "url": "http://arxiv.org/abs/2608.11408v1",
-          "summary": "The paper introduces J-Access, an inference-time audit that projects intermediate representations into vocabulary space to measure how often target concepts remain accessible along the output pathway, hypothesizing that residual accessibility predicts recovery susceptibility. Auditing 398 public unlearned models across eight methods, they find most retain accessibility above a retain-only gold level, pre-attack accessibility predicts recovery speed and extent at the model level (but not per-fact), and directly minimizing J-Access causes the model to hide knowledge from the audit while increasing post-attack recovery. They conclude J-Access is useful as a model-level diagnostic for residual susceptibility and caution against turning internal audits into optimization targets without validation.",
-          "why_it_matters": "Offers an actionable, model-level risk signal for unlearning robustness and a clear warning about Goodharting internal audits\u2014relevant for designing secure unlearning and audit pipelines in LLMs.",
-          "score": 7.0,
-          "reason": "Investigates latent recovery after LLM unlearning with an audit (J\u2011Access) \u2014 important for data\u2011removal/extraction risk monitoring and evaluation methodology.",
+          "title": "Security Assessment of DeepSeek Harness with A.I.G: Evaluating Resistance to Indirect Prompt Injection",
+          "url": "http://arxiv.org/abs/2608.16393v1",
+          "summary": "This work evaluates indirect prompt injection against DeepSeek Harness using AI-Infra-Guard to generate tests, deliver controlled taint across 16 channels and two carrier modes, run 14,560 executions, and analyze traces with both rule-based and LLM-based judges. The strongest observed attack success rates are 17.0% under LLMJudge for a fake-completion attack (text), 25.5% under RuleJudge for hidden Unicode (file), and 16.0% under RuleJudge for the skills channel (file), with LLMJudge assigning more partial compliance than RuleJudge (7.3% vs. 2.0%). The study connects outcomes to DSH\u2019s handling of tool results, extra contexts, and tool-call policy hooks, and proposes controls between untrusted content and sensitive actions, with code released at the linked repository.",
+          "why_it_matters": "Provides a large-scale, reproducible, channel- and payload-stratified benchmark of indirect prompt injection on an agentic LLM stack with dual judges, informing defense design and evaluation baselines.",
+          "score": 9.0,
+          "reason": "Black-box auditing of vendor-hosted LLM APIs via statistical repeated-query testing is highly relevant for red-teaming, API threat models, and evaluation methodology.",
           "slot": "relevance",
           "sections": [
             "llm-security",
@@ -1438,12 +1420,12 @@
           ]
         },
         {
-          "title": "Security Assessment of DeepSeek Harness with A.I.G: Evaluating Resistance to Indirect Prompt Injection",
-          "url": "http://arxiv.org/abs/2608.16393v1",
-          "summary": "This work evaluates indirect prompt injection against DeepSeek Harness using AI-Infra-Guard to generate tests, deliver controlled taint across 16 channels and two carrier modes, run 14,560 executions, and analyze traces with both rule-based and LLM-based judges. The strongest observed attack success rates are 17.0% under LLMJudge for a fake-completion attack (text), 25.5% under RuleJudge for hidden Unicode (file), and 16.0% under RuleJudge for the skills channel (file), with LLMJudge assigning more partial compliance than RuleJudge (7.3% vs. 2.0%). The study connects outcomes to DSH\u2019s handling of tool results, extra contexts, and tool-call policy hooks, and proposes controls between untrusted content and sensitive actions, with code released at the linked repository.",
-          "why_it_matters": "Provides a large-scale, reproducible, channel- and payload-stratified benchmark of indirect prompt injection on an agentic LLM stack with dual judges, informing defense design and evaluation baselines.",
-          "score": 9.0,
-          "reason": "Black-box auditing of vendor-hosted LLM APIs via statistical repeated-query testing is highly relevant for red-teaming, API threat models, and evaluation methodology.",
+          "title": "Measure, Don't Optimize: Forecasting Recovery in LLM Unlearning",
+          "url": "http://arxiv.org/abs/2608.11408v1",
+          "summary": "The paper introduces J-Access, an inference-time audit that projects intermediate representations into vocabulary space to measure how often target concepts remain accessible along the output pathway, hypothesizing that residual accessibility predicts recovery susceptibility. Auditing 398 public unlearned models across eight methods, they find most retain accessibility above a retain-only gold level, pre-attack accessibility predicts recovery speed and extent at the model level (but not per-fact), and directly minimizing J-Access causes the model to hide knowledge from the audit while increasing post-attack recovery. They conclude J-Access is useful as a model-level diagnostic for residual susceptibility and caution against turning internal audits into optimization targets without validation.",
+          "why_it_matters": "Offers an actionable, model-level risk signal for unlearning robustness and a clear warning about Goodharting internal audits\u2014relevant for designing secure unlearning and audit pipelines in LLMs.",
+          "score": 7.0,
+          "reason": "Investigates latent recovery after LLM unlearning with an audit (J\u2011Access) \u2014 important for data\u2011removal/extraction risk monitoring and evaluation methodology.",
           "slot": "relevance",
           "sections": [
             "llm-security",
@@ -1579,6 +1561,20 @@
           ]
         },
         {
+          "title": "Priming Base Models for Agentic Post-Training: An Open Midtraining Recipe",
+          "url": "http://arxiv.org/abs/2610.22019v1",
+          "summary": null,
+          "why_it_matters": null,
+          "score": 8.0,
+          "reason": "Discusses agentic post-training and midtraining for LLMs\u2014highly relevant to agentic-security and evaluation of security implications in LLM pipelines.",
+          "slot": "relevance",
+          "sections": [
+            "llm-security",
+            "evaluation",
+            "longform"
+          ]
+        },
+        {
           "title": "Have an LLM Write Your Anomaly Detector: Autonomous Discovery of Compact, Interpretable Detectors for Time Series",
           "url": "http://arxiv.org/abs/2610.01223v1",
           "summary": "They use a large language model not as the detector but as the author of an autonomous loop that edits a compact NumPy program under a leakage-free objective, retaining the best-scoring detector found. The loop yields two compact detectors (one univariate, one multivariate) that describe short windows by local spectral features and compare to the training-region distribution via a covariance-aware distance. On the TSB-AD benchmark these detectors outperform classical, deep, and foundation-model baselines, train no networks, require no GPUs, and the multivariate detector is faster than comparable baselines; the approach demonstrates LLM-driven program search as a practical route to accurate, efficient, and transparent detectors.",
@@ -1589,19 +1585,6 @@
           "sections": [
             "tsfm",
             "evaluation",
-            "longform"
-          ]
-        },
-        {
-          "title": "DataSense-Bench: The First Step Toward an AI Scientist",
-          "url": "http://arxiv.org/abs/2610.12190v1",
-          "summary": "DataSense-Bench investigates whether frontier AI models can reliably select data for training by tackling data selection and performance forecasting in ML. The study allows AI agents to inspect data, generate/run analysis code, and execute model forward passes to choose and rank candidate training subsets, which are then used to fine-tune a small LLM and evaluated under a standardized protocol. The benchmark uses OpenThoughts-Agent and EnvScaler trajectories (TBLite and BFCL evaluations) to assess post-training performance of top-ranked subsets and ranking accuracy, reporting limited selection gains over random choice and inconsistent ranking across tasks, with agents often relying on similar data signals but interpreting training value differently.",
-          "why_it_matters": "Directly relevant to data-centric ML and AI system evaluation, linking data selection quality to post-training impact and ranking reliability in LLM fine-tuning scenarios.",
-          "score": 7.0,
-          "reason": "Introduces a multivariate time-series foundation model with primitive-based pretraining\u2014core to TSFM and generalization across domains.",
-          "slot": "relevance",
-          "sections": [
-            "tsfm",
             "longform"
           ]
         }
@@ -1693,6 +1676,21 @@
   "archive": {
     "llm-security": [
       {
+        "title": "Backdoor Purification for LoRA-Tuned LLMs via Null-Space Projection",
+        "url": "http://arxiv.org/abs/2610.00685v1",
+        "summary": "The work addresses backdoor purification for LoRA-tuned LLMs without relying on triggers, clean references, or post-hoc retraining of suspect parameters. It proposes extracting high-fidelity backdoor directions and projecting LoRA updates onto orthogonal null spaces in both input and output channels per layer/head, thereby purifying the model. Empirically, null-space projection reduces attack success rate from ~100% to <10% while preserving the base model's capabilities and the adapter\u2019s downstream skills.",
+        "why_it_matters": "Directly targets backdoor mitigation in PEFT-enabled LLMs with no-retraining requirements, aligning with practical security controls for LoRA-tuned systems.",
+        "score": 9.0,
+        "reason": "Directly addresses backdoor purification/removal in LLMs and LoRA/PEFT contexts, a core security topic with practical defense implications.",
+        "slot": "relevance",
+        "sections": [
+          "llm-security",
+          "adversarial-ml",
+          "evaluation",
+          "policy"
+        ]
+      },
+      {
         "title": "When Do PEFT Adaptations Leak Structure? Measuring Black-Box Structural Bounds in Public-Base Model Services",
         "url": "http://arxiv.org/abs/2608.05036v1",
         "summary": "The paper introduces VectorHijack-SR, a black-box measurement method that turns paired victim/base residuals into calibrated bounds over PEFT family, layer locality, and coarse rank, using aggregated query-level statistics and a service-disjoint classifier plus a cross-fitted hierarchical rejector to test LoRA-manifold membership. Empirically, family leakage exceeds chance across multiple backbones/tasks, rank inference varies by task, the rejector attains AUROC 0.804 and high known-set accuracy but struggles with structurally close DoRA/LoRA+head, and exact-version linkage on held-out LoRA-r64 services reaches AUC 0.940. Despite measurable structural leakage, experiments show a visibility\u2013exploitability gap: two-stage recovery offers no fair-budget query savings, posterior-selected PEFT underperforms distill-then-convert PEFT, and free-running generation remains near chance.",
@@ -1736,34 +1734,6 @@
         ]
       },
       {
-        "title": "Measuring Task-Agnostic Training Data Influence Across Language Model Pretraining",
-        "url": "http://arxiv.org/abs/2608.13515v1",
-        "summary": "The paper introduces a task-agnostic measure of training data influence that quantifies how much an example\u2019s gradient update reduces the squared distance to a run\u2019s final parameters, estimated from intermediate checkpoints without retraining. Applied to 18 Pythia and PolyPythia configurations, the method reveals systematic temporal shifts in influential data: literature-related data align more with the parameter trajectory early, while STEM data align more later. This qualitative crossover is broadly consistent across configurations, offering a tractable trajectory-level perspective that complements task-based influence analyses.",
-        "why_it_matters": "Gives a practical, retraining-free way to map which data sources steer pretraining trajectories over time, informing data curation, curriculum, and security-relevant provenance audits for LLMs.",
-        "score": 8.0,
-        "reason": "Proposes a task-agnostic measure of individual-example influence during LM pretraining which is highly relevant to data provenance, extraction/attribution, contamination, and training-time attack/defense analysis.",
-        "slot": "relevance",
-        "sections": [
-          "llm-security",
-          "adversarial-ml",
-          "evaluation"
-        ]
-      },
-      {
-        "title": "Proving the Utility of Large Language Models in Cybersecurity Simulations: A Comprehensive Examination",
-        "url": "http://arxiv.org/abs/2608.16422v1",
-        "summary": "The paper evaluates LLMs for cybersecurity simulations, using YAML to represent complex network configurations and to drive pipelines that support RL agent training. It compares LLM-based techniques to classical methods like Double Q-learning with PER, claiming improved efficiency, adaptability, and realism in cyberattack simulations. In benchmarks on multiple synthetic topologies, LLM-instantiated Python agents reached up to a 94.5% compromise rate and 0.02\u20130.06s per assessment, a ~25,000x\u201350,000x speedup over traditional RL cycles.",
-        "why_it_matters": "Shows LLM-driven generation/execution pipelines can massively accelerate cyber-sim training and evaluation, relevant to secure LLM autonomy and sim-to-real robustness for time-series/agentic models.",
-        "score": 8.0,
-        "reason": "Large-scale experimental evaluation of indirect prompt injection across channels and payloads maps closely to prompt-injection/jailbreak threat modeling and red-teaming methodology.",
-        "slot": "relevance",
-        "sections": [
-          "llm-security",
-          "agents",
-          "evaluation"
-        ]
-      },
-      {
         "title": "FedLNS: Leverage LayerNorm Signature Modeling to Mitigate Adversarial Manipulation in Federated LLMs",
         "url": "http://arxiv.org/abs/2608.18736v1",
         "summary": "The paper introduces FedLNS, a server-side framework that screens federated LLM client updates by modeling changes in trainable normalization-layer parameters as signatures and comparing them to a history-aware cross-client reference. It operates without additional client-to-server metadata, raw client data, trusted server datasets, labeled attack examples, or a separately trained detector, and retains full-model updates for standard or compatible aggregation after screening. Experiments on GPT-, BERT-, and LLaMA-style models trained from scratch with 200 clients show that under 40% target manipulation, FedLNS yields lower test perplexity than six baselines across IID and non-IID partitions.",
@@ -1789,19 +1759,6 @@
           "llm-security",
           "adversarial-ml",
           "evaluation"
-        ]
-      },
-      {
-        "title": "Removing the NEEDLE in the Haystack: Backdoor Removal in LLMs via Weight Orthogonalisation",
-        "url": "http://arxiv.org/abs/2610.00348v1",
-        "summary": "NEEDLE is a training-free method for targeted backdoor removal in LLMs that first identifies a backdoor trigger, then estimates a backdoor direction and a refusal subspace via activation vectors. It then applies sequential weight orthogonalisation to suppress the backdoor while preserving refusal-related representations, avoiding reliance on a clean reference model or original poisoned training data. Evaluated across model families and attack types, NEEDLE achieves the lowest mean Attack Success Rate among the defences, including 0% on code injection attacks, and induces the smallest KL divergence with minimal impacts on capability and safety.",
-        "why_it_matters": "Offers a training-free, targeted backdoor removal approach that preserves functional safety/capability, aligning with practical needs in LLM security and model integrity without requiring original poisoned data or clean references.",
-        "score": 8.0,
-        "reason": "Proposes training-free backdoor removal (NEEDLE) with weight orthogonalisation, relevant to defense and robustness of LLMs.",
-        "slot": "relevance",
-        "sections": [
-          "llm-security",
-          "adversarial-ml"
         ]
       },
       {
@@ -1833,6 +1790,20 @@
         ]
       },
       {
+        "title": "Priming Base Models for Agentic Post-Training: An Open Midtraining Recipe",
+        "url": "http://arxiv.org/abs/2610.22019v1",
+        "summary": null,
+        "why_it_matters": null,
+        "score": 8.0,
+        "reason": "Discusses agentic post-training and midtraining for LLMs\u2014highly relevant to agentic-security and evaluation of security implications in LLM pipelines.",
+        "slot": "relevance",
+        "sections": [
+          "llm-security",
+          "evaluation",
+          "longform"
+        ]
+      },
+      {
         "title": "Do All LLMs Know When They're Being Harmful? A Reproducibility Study of Latent-Space Safety Probes Across Model Families",
         "url": "http://arxiv.org/abs/2608.08029v1",
         "summary": "This study reproduces Khatri et al.\u2019s pipeline for training lightweight MLP probes on final-layer activations to detect harmful prompts, matching the original LLaMA-3.1-8B results within 0.37 F1 points (0.2 on BeaverTails). It extends the evaluation across Gemma-4-E4B, Mistral-7B-v0.3, and Qwen2-7B on WildJailbreak, BeaverTails, and AEGIS 2.0, finding F1 within about one point of the LLaMA-3.1-8B values using the same probe architecture. It also assesses nondeterminism by varying seeds and reports that final token latent vectors were invariant to seed across architectures.",
@@ -1844,20 +1815,6 @@
           "llm-security",
           "evaluation",
           "alignment"
-        ]
-      },
-      {
-        "title": "RouteGuard: Certifying Routing Gain in LLM Multi-Agent Systems When Complementarity Is Not Enough",
-        "url": "http://arxiv.org/abs/2608.07583v1",
-        "summary": "The paper shows that common assumptions for multi-agent LLM routing\u2014optimizing gate AUC and relying on advisor complementarity\u2014do not determine deployable gain, and introduces RouteGuard to certify routing benefit. It decomposes gain as G = \u03c0\u0394_E, identifies a conditional-regret functional \u03a6 as the governing quantity (not AUC), provides a finite-sample certification bracket with a matching Le Cam lower bound that is constant-sharp over the fixed-activity class, and observes a robustness phase transition. Experiments on RouterBench and OpenRCA demonstrate RouteGuard acting as a guardrail, certifying gain only under prompt-level sampling (not workload-cluster resampling) on RouterBench and refusing to certify on OpenRCA due to advisor redundancy, with pre-registered semi-synthetic controls confirming calibration thresholds.",
-        "why_it_matters": "It offers a principled, sample-sensitive certification of routing gain that can prevent illusory improvements in LLM multi-agent systems and aligns evaluation with deployment risk.",
-        "score": 7.0,
-        "reason": "Analyzes routing certification in LLM multi-advisor systems and provides finite-sample guarantees for when routing yields deployable gain\u2014relevant to safe agent composition, evaluation metrics beyond AUC, and deployment-risk assessment.",
-        "slot": "relevance",
-        "sections": [
-          "agents",
-          "llm-security",
-          "evaluation"
         ]
       },
       {
@@ -1903,20 +1860,6 @@
         ]
       },
       {
-        "title": "No Free Efficiency: Revisiting the Trade-off Between Training Efficiency and Model Vulnerability",
-        "url": "http://arxiv.org/abs/2609.33898v1",
-        "summary": "Training efficiency strategies, including selective data sampling, efficient pre-training, and simplified RL pipelines, are explored for their impact on robustness. Across vision and language models, efficiency-oriented training is shown to increase susceptibility to adversarial and privacy attacks, with sharper loss geometry and systematic changes in internal representations. The study also analyzes zero RL training, finding greater catastrophic forgetting and overconfidence under simplified RL recipes, advocating for multi-objective training that balances performance, cost, and security.",
-        "why_it_matters": "Directly links efficiency gains to security/vulnerability concerns across domains, relevant to work on LLM security and time-series foundation models where efficiency-driven practices may affect robustness and privacy.",
-        "score": 7.0,
-        "reason": "Prompt injection red-teaming with curriculum RL directly targets frontier-model security and robustness evaluation.",
-        "slot": "relevance",
-        "sections": [
-          "llm-security",
-          "adversarial-ml",
-          "evaluation"
-        ]
-      },
-      {
         "title": "From Experience to Expertise: Adoption-Aware Memory Learning for Data-Scarce NPU Kernel Synthesis",
         "url": "http://arxiv.org/abs/2609.35568v1",
         "summary": "SAGE is a persistent self-improving agent for NPU kernel synthesis that addresses transfer gaps from LLMs by using memory-based learning with adoption-aware mechanisms. Adoption-Traced Utility estimation (ATU) combines explicit adoption records with kernel evaluation outcomes for credit assignment, while Utility-Gated Consolidation (UGC) uses positive utility and repeated adoption across operators to abstract reusable rules into a bounded resident context. On NPUKernelBench and with GLM-5.3, SAGE shows higher execution rates and faster sparse attention performance compared to baselines and torch_npu, indicating effective accumulation and reuse of hardware-specific knowledge across tasks.",
@@ -1937,6 +1880,20 @@
         "why_it_matters": "Demonstrates a lightweight, perturbation-based failure mode in open-weight LLM safety, highlighting a practical attack surface for embedding-space robustness and informing evaluation and defense strategies in LLM security and time-series foundation model contexts.",
         "score": 7.0,
         "reason": "Jailbreaking open-weight LLMs via random embedding perturbations; directly about exploitation and defense of safety barriers.",
+        "slot": "relevance",
+        "sections": [
+          "llm-security",
+          "adversarial-ml",
+          "evaluation"
+        ]
+      },
+      {
+        "title": "Divergent Paths: Learning an Outcome-Predictive Representation of LLM Agent Trajectories",
+        "url": "http://arxiv.org/abs/2610.19614v1",
+        "summary": null,
+        "why_it_matters": null,
+        "score": 7.0,
+        "reason": "Learning outcome-predictive representations of agent trajectories informs security evaluation of agent behavior and failure modes.",
         "slot": "relevance",
         "sections": [
           "llm-security",
@@ -2042,6 +1999,20 @@
         ]
       },
       {
+        "title": "StableJudge: A Lightweight Adversarial Defense Framework for LLM-as-a-Judge",
+        "url": "http://arxiv.org/abs/2610.16814v1",
+        "summary": null,
+        "why_it_matters": null,
+        "score": 6.0,
+        "reason": "StableJudge proposes defenses for LLM-as-a-Judge against prompt-injection-based score hijacking; relevant to evaluation security.",
+        "slot": "relevance",
+        "sections": [
+          "llm-security",
+          "adversarial-ml",
+          "evaluation"
+        ]
+      },
+      {
         "title": "Learning the Pareto Frontier of Predictive Models under Distribution Shift",
         "url": "http://arxiv.org/abs/2608.00632v1",
         "summary": "The paper introduces Frontier Learning, which treats a library of pretrained models with mixed access regimes (black-box predictions and white-box representations) as complementary sources under distribution shift. It builds a unified target-domain feature by concatenating internal representations from white-box models with outputs from black-box models, then trains a lightweight regularized supervised learner, guaranteeing training-sample risk no worse than any single baseline including zero-shot reuse, fine-tuning, or direct training. Experiments on simulations and real-world shifts (DomainNet/VisDA and MIMIC-IV-Notes ICU mortality) show it matches or outperforms the strongest individual reuse strategy, with the largest gains when no single baseline is reliable across the shifts considered.",
@@ -2138,20 +2109,6 @@
         ]
       },
       {
-        "title": "GNA: Granular Neighbor Assembly for Retrieval-Augmented Multivariate Time-Series Forecasting",
-        "url": "http://arxiv.org/abs/2609.36281v1",
-        "summary": null,
-        "why_it_matters": null,
-        "score": 5.0,
-        "reason": "Item 3 explores mid-training compute allocation for LLMs, with potential implications for security-focused training efficiency and evaluation.",
-        "slot": "relevance",
-        "sections": [
-          "llm-security",
-          "agents",
-          "evaluation"
-        ]
-      },
-      {
         "title": "LLM2Jev: LLMs Are Already Jev-Style Decision Models -- When and How to Fine-Tune Them",
         "url": "http://arxiv.org/abs/2610.02076v1",
         "summary": null,
@@ -2191,23 +2148,37 @@
           "evaluation",
           "has-code"
         ]
-      }
-    ],
-    "adversarial-ml": [
+      },
       {
-        "title": "Measuring Task-Agnostic Training Data Influence Across Language Model Pretraining",
-        "url": "http://arxiv.org/abs/2608.13515v1",
-        "summary": "The paper introduces a task-agnostic measure of training data influence that quantifies how much an example\u2019s gradient update reduces the squared distance to a run\u2019s final parameters, estimated from intermediate checkpoints without retraining. Applied to 18 Pythia and PolyPythia configurations, the method reveals systematic temporal shifts in influential data: literature-related data align more with the parameter trajectory early, while STEM data align more later. This qualitative crossover is broadly consistent across configurations, offering a tractable trajectory-level perspective that complements task-based influence analyses.",
-        "why_it_matters": "Gives a practical, retraining-free way to map which data sources steer pretraining trajectories over time, informing data curation, curriculum, and security-relevant provenance audits for LLMs.",
-        "score": 8.0,
-        "reason": "Proposes a task-agnostic measure of individual-example influence during LM pretraining which is highly relevant to data provenance, extraction/attribution, contamination, and training-time attack/defense analysis.",
+        "title": "AutoSec-RAN: Specification-Grounded LLM Fine-Tuning for Automated Security Analysis of O-RAN",
+        "url": "http://arxiv.org/abs/2610.15995v1",
+        "summary": null,
+        "why_it_matters": null,
+        "score": 5.0,
+        "reason": "AutoSec-RAN applies specification-grounded LLMs for automated security analysis of O-RAN; intersects LLM security evaluation and defense.",
         "slot": "relevance",
         "sections": [
           "llm-security",
-          "adversarial-ml",
-          "evaluation"
+          "evaluation",
+          "adversarial-ml"
         ]
       },
+      {
+        "title": "When Does Trust Help? A Leakage-Free Evaluation of Representation- and Aggregation-Based Defenses Against Backdoors in Federated Intrusion Detection",
+        "url": "http://arxiv.org/abs/2610.14767v1",
+        "summary": null,
+        "why_it_matters": null,
+        "score": 5.0,
+        "reason": "Leakage-free evaluation of defenses against backdoors in federated intrusion detection aligns with evaluation robustness and security evaluation.",
+        "slot": "relevance",
+        "sections": [
+          "adversarial-ml",
+          "evaluation",
+          "llm-security"
+        ]
+      }
+    ],
+    "adversarial-ml": [
       {
         "title": "FedLNS: Leverage LayerNorm Signature Modeling to Mitigate Adversarial Manipulation in Federated LLMs",
         "url": "http://arxiv.org/abs/2608.18736v1",
@@ -2264,20 +2235,6 @@
         ]
       },
       {
-        "title": "No Free Efficiency: Revisiting the Trade-off Between Training Efficiency and Model Vulnerability",
-        "url": "http://arxiv.org/abs/2609.33898v1",
-        "summary": "Training efficiency strategies, including selective data sampling, efficient pre-training, and simplified RL pipelines, are explored for their impact on robustness. Across vision and language models, efficiency-oriented training is shown to increase susceptibility to adversarial and privacy attacks, with sharper loss geometry and systematic changes in internal representations. The study also analyzes zero RL training, finding greater catastrophic forgetting and overconfidence under simplified RL recipes, advocating for multi-objective training that balances performance, cost, and security.",
-        "why_it_matters": "Directly links efficiency gains to security/vulnerability concerns across domains, relevant to work on LLM security and time-series foundation models where efficiency-driven practices may affect robustness and privacy.",
-        "score": 7.0,
-        "reason": "Prompt injection red-teaming with curriculum RL directly targets frontier-model security and robustness evaluation.",
-        "slot": "relevance",
-        "sections": [
-          "llm-security",
-          "adversarial-ml",
-          "evaluation"
-        ]
-      },
-      {
         "title": "From Experience to Expertise: Adoption-Aware Memory Learning for Data-Scarce NPU Kernel Synthesis",
         "url": "http://arxiv.org/abs/2609.35568v1",
         "summary": "SAGE is a persistent self-improving agent for NPU kernel synthesis that addresses transfer gaps from LLMs by using memory-based learning with adoption-aware mechanisms. Adoption-Traced Utility estimation (ATU) combines explicit adoption records with kernel evaluation outcomes for credit assignment, while Utility-Gated Consolidation (UGC) uses positive utility and repeated adoption across operators to abstract reusable rules into a bounded resident context. On NPUKernelBench and with GLM-5.3, SAGE shows higher execution rates and faster sparse attention performance compared to baselines and torch_npu, indicating effective accumulation and reuse of hardware-specific knowledge across tasks.",
@@ -2306,6 +2263,20 @@
         ]
       },
       {
+        "title": "Divergent Paths: Learning an Outcome-Predictive Representation of LLM Agent Trajectories",
+        "url": "http://arxiv.org/abs/2610.19614v1",
+        "summary": null,
+        "why_it_matters": null,
+        "score": 7.0,
+        "reason": "Learning outcome-predictive representations of agent trajectories informs security evaluation of agent behavior and failure modes.",
+        "slot": "relevance",
+        "sections": [
+          "llm-security",
+          "adversarial-ml",
+          "evaluation"
+        ]
+      },
+      {
         "title": "Diversity Matters: Distributional Feature Coverage Sample Selection for Data-Efficient Backdoor Attacks",
         "url": "http://arxiv.org/abs/2608.09047v1",
         "summary": "The paper introduces DFCS, a training-free, trigger-agnostic sample selection method that clusters pretrained features into one region per poisoning slot and picks centroid-nearest samples to avoid redundant poisons. A local first-order analysis links this allocation to feature-coverage and representative-mass terms. On CIFAR-10, Tiny-ImageNet, and Imagenette with BadNets and Blended attacks, DFCS achieves the highest mean ASR among seven selectors in all six settings, averaging 96.30% and surpassing the strongest comparator by 4.60 points on average while maintaining clean accuracy.",
@@ -2316,20 +2287,6 @@
         "sections": [
           "adversarial-ml",
           "llm-security"
-        ]
-      },
-      {
-        "title": "ProbGuard: Calibrated Safety Risk Estimation from LLM Output Distributions",
-        "url": "http://arxiv.org/abs/2608.10621v1",
-        "summary": "ProbGuard reframes LLM safety assessment as probabilistic risk estimation over the model\u2019s early output distribution rather than deterministic classification on completed token sequences. It estimates the probability of unsafe continuation via Monte Carlo over generated prefix distributions and calibrates this risk through post-training, enabling early stopping of unsafe generations. Empirically, it achieves the best calibration across nine model\u2013dataset settings (average Brier and ECE reduced by 79.6% and 71.9% vs. the best baseline) and caps jailbreak attack success to \u22641% after only the first ten decoding steps.",
-        "why_it_matters": "It operationalizes distribution-aware, early-stage safety control with strong calibration\u2014useful for red-teaming defenses, risk-sensitive deployment, and aligning with probabilistic guardrail research and time-series-style forecasting over generation trajectories.",
-        "score": 6.0,
-        "reason": "Proposes a novel metric (feature nonlocality) to assess abstraction level of learned features from sparse autoencoders; useful for mechanistic interpretability and evaluating claims about high-level features relevant to jailbreak/mechanistic work.",
-        "slot": "relevance",
-        "sections": [
-          "alignment",
-          "adversarial-ml",
-          "evaluation"
         ]
       },
       {
@@ -2389,6 +2346,20 @@
         ]
       },
       {
+        "title": "StableJudge: A Lightweight Adversarial Defense Framework for LLM-as-a-Judge",
+        "url": "http://arxiv.org/abs/2610.16814v1",
+        "summary": null,
+        "why_it_matters": null,
+        "score": 6.0,
+        "reason": "StableJudge proposes defenses for LLM-as-a-Judge against prompt-injection-based score hijacking; relevant to evaluation security.",
+        "slot": "relevance",
+        "sections": [
+          "llm-security",
+          "adversarial-ml",
+          "evaluation"
+        ]
+      },
+      {
         "title": "Analysis of Federated Aggregation under Model Poisoning and Backdoor Attacks: A Reconstructed Cross-Dataset and Cross-Architecture Benchmark",
         "url": "http://arxiv.org/abs/2608.11423v1",
         "summary": "This work reconstructs a 500-cell federated aggregation benchmark across five methods, five datasets, five architectures, and four conditions (clean, sign-flipping, Gaussian, BadNets), recovering 454 original runs and 36 repairs/reruns, with 10 SVHN cells covered only by summary provenance. Trimmed Mean has the best clean macro-mean accuracy and lowest mean within-task rank, while Krum shows the top recorded accuracy under sign-flipping and Gaussian, and these rankings persist when restricted to fully logged task pairs. Audits reveal the BadNets metric is actually TTLR (all test inputs triggered) and a FedPARETO pathway where reported predictive summaries may not match the corrupted updates used for aggregation, so results are descriptive within recorded configs rather than universal robustness claims.",
@@ -2444,6 +2415,34 @@
         ]
       },
       {
+        "title": "AutoSec-RAN: Specification-Grounded LLM Fine-Tuning for Automated Security Analysis of O-RAN",
+        "url": "http://arxiv.org/abs/2610.15995v1",
+        "summary": null,
+        "why_it_matters": null,
+        "score": 5.0,
+        "reason": "AutoSec-RAN applies specification-grounded LLMs for automated security analysis of O-RAN; intersects LLM security evaluation and defense.",
+        "slot": "relevance",
+        "sections": [
+          "llm-security",
+          "evaluation",
+          "adversarial-ml"
+        ]
+      },
+      {
+        "title": "When Does Trust Help? A Leakage-Free Evaluation of Representation- and Aggregation-Based Defenses Against Backdoors in Federated Intrusion Detection",
+        "url": "http://arxiv.org/abs/2610.14767v1",
+        "summary": null,
+        "why_it_matters": null,
+        "score": 5.0,
+        "reason": "Leakage-free evaluation of defenses against backdoors in federated intrusion detection aligns with evaluation robustness and security evaluation.",
+        "slot": "relevance",
+        "sections": [
+          "adversarial-ml",
+          "evaluation",
+          "llm-security"
+        ]
+      },
+      {
         "title": "Cross-Corpus Evaluation of Generalizable Vulnerability Detection in IoT Firmware",
         "url": "http://arxiv.org/abs/2608.11492v1",
         "summary": "The paper introduces IoTVulBench, a human-verified, contamination-screened benchmark for cross-corpus IoT firmware vulnerability detection, and evaluates five model architectures, two tuning methods, and three curriculum strategies with ensemble, distillation, and robustness analyses. Models trained on IoTVulBench outperform matched single-source datasets (MCC 0.58 vs. 0.44 for PrimeVul and 0.39 for D2A), with staged curriculum learning raising MCC to 0.69 and a diversity-optimized ensemble reaching 0.73, surpassing a static analyzer (0.31) and PrimeVul by large margins while maintaining 86% performance under identifier renaming and showing strong calibration and largely faithful explanations. At a 0.5% FPR, the model missed 21% of vulnerabilities versus 71% for the strongest comparator, indicating domain-matched data and curriculum design\u2014not model scale alone\u2014drive generalization in firmware vulnerability detection.",
@@ -2482,23 +2481,22 @@
           "evaluation",
           "adversarial-ml"
         ]
-      },
-      {
-        "title": "Efficient Multimodal Inference through Adaptive Acquisition and Sequential Fusion",
-        "url": "http://arxiv.org/abs/2610.07466v1",
-        "summary": null,
-        "why_it_matters": null,
-        "score": 4.0,
-        "reason": "Active feature acquisition evaluation from offline data relates to evaluation methodology and robustness in tabular TSFM contexts.",
-        "slot": "relevance",
-        "sections": [
-          "tsfm",
-          "evaluation",
-          "adversarial-ml"
-        ]
       }
     ],
     "tsfm": [
+      {
+        "title": "DataSense-Bench: The First Step Toward an AI Scientist",
+        "url": "http://arxiv.org/abs/2610.12190v1",
+        "summary": "DataSense-Bench investigates whether frontier AI models can reliably select data for training by tackling data selection and performance forecasting in ML. The study allows AI agents to inspect data, generate/run analysis code, and execute model forward passes to choose and rank candidate training subsets, which are then used to fine-tune a small LLM and evaluated under a standardized protocol. The benchmark uses OpenThoughts-Agent and EnvScaler trajectories (TBLite and BFCL evaluations) to assess post-training performance of top-ranked subsets and ranking accuracy, reporting limited selection gains over random choice and inconsistent ranking across tasks, with agents often relying on similar data signals but interpreting training value differently.",
+        "why_it_matters": "Directly relevant to data-centric ML and AI system evaluation, linking data selection quality to post-training impact and ranking reliability in LLM fine-tuning scenarios.",
+        "score": 7.0,
+        "reason": "Introduces a multivariate time-series foundation model with primitive-based pretraining\u2014core to TSFM and generalization across domains.",
+        "slot": "relevance",
+        "sections": [
+          "tsfm",
+          "longform"
+        ]
+      },
       {
         "title": "HART: Hybrid Attention-RWKV Time series Foundation Model",
         "url": "http://arxiv.org/abs/2610.12883v1",
@@ -2551,20 +2549,6 @@
           "efficiency",
           "llm-security",
           "tsfm"
-        ]
-      },
-      {
-        "title": "Quantifying Behavioral Tails in Black-Box Language Models",
-        "url": "http://arxiv.org/abs/2609.33638v1",
-        "summary": "RareTrap introduces a framework for estimating the probability of severe behaviors in black box LLMs by using a surrogate LLM to create a geometry-aware mapping from a low-dimensional latent reference space into token embeddings, thereby inducing a tractable and reproducible input prompt distribution. A response-level performance function quantifies behavior severity, enabling sequential rare event simulation that focuses evaluations on progressively more severe behaviors while preserving the induced prompt distribution. Evaluations on 10 open-weight and two frontier models (GPT-5.4 and Claude Sonnet 4.6) show that RareTrap can induce severe resource consumption behaviors and compute their probability with as few as 200 evaluations, offering a principled approach for model developers to assess safety under a common distribution and prioritize alignment efforts.",
-        "why_it_matters": "Provides a principled, probability-grounded method to quantify rare, severe behaviors in black-box LLMs, relevant for time-series foundation models and security-focused ML research.",
-        "score": 6.0,
-        "reason": "Item 6 discusses time series foundation models with inference-time guidance and ensembling, relevant to TSFM and evaluation/robustness considerations.",
-        "slot": "relevance",
-        "sections": [
-          "tsfm",
-          "evaluation",
-          "adversarial-ml"
         ]
       },
       {
@@ -2622,20 +2606,6 @@
         ]
       },
       {
-        "title": "LightMTP: Lightweight Latent Multi-Token Prediction",
-        "url": "http://arxiv.org/abs/2610.06031v1",
-        "summary": "LightMTP proposes a lightweight latent multi-token prediction objective to extend supervision beyond the immediate next token without large parameter increases or external helper models. It bootstraps future token representations from the model\u2019s own hidden states and introduces two variants that predict more future tokens with no significant computational overhead compared to conventional MTP. The approach adds at most 1% extra parameters while maintaining strong performance on general language modeling benchmarks and achieving gains in planning, coding, and reasoning tasks.",
-        "why_it_matters": "It offers a parameter-efficient path to multi-token prediction that aligns with latent supervision ideas and avoids external encoders, potentially improving long-horizon structure capture in LLMs and time-series foundation models.",
-        "score": 6.0,
-        "reason": "Lightweight latent multi-token prediction; efficiency/architecture angle for next-token and multi-token forecasting in TS models.",
-        "slot": "relevance",
-        "sections": [
-          "tsfm",
-          "evaluation",
-          "has-code"
-        ]
-      },
-      {
         "title": "STAPLE: Static Sparse Upcycling of Pretrained Checkpoints via Embedding Modules",
         "url": "http://arxiv.org/abs/2610.12599v1",
         "summary": "STAPLE builds on STEM to integrate static sparse memory into pretrained models by retaining FFN up-projections and adding token-embedded representations as a residual pathway, enabling token-specific information to be learned without discarding pretrained computation. On OLMo-2 1B and 7B backbones, STAPLE yields performance improvements over continued dense training (e.g., +4.27 on HumanEval, +2.80 MBPP, +2.27 GSM8K, +1.65 DROP in 1B) and outperforms static sparse baselines and an Engram-style model, while decoding 2x faster with less than half the GPU model memory and measured GPU energy per token in throughput-oriented decoding. Despite introducing billions of parameters late in training, the host-offloaded implementation maintains generation throughput within 1.5% and training throughput within 3% of the dense baseline by caching only ~5% of the most frequent embeddings on GPU, suggesting static sparse memory as a sample-efficient, scalable path for expanding pretrained models without sparse pretraining from scratch.",
@@ -2646,6 +2616,19 @@
         "sections": [
           "tsfm",
           "efficiency",
+          "evaluation"
+        ]
+      },
+      {
+        "title": "TreeSpark: Learning to Draft the Trees You Verify for Speculative Decoding",
+        "url": "http://arxiv.org/abs/2610.20175v1",
+        "summary": null,
+        "why_it_matters": null,
+        "score": 6.0,
+        "reason": "TreeSpark deals with speculative decoding and training/inference efficiency for sequence models; tangential relevance to TSFM architectures and evaluation.",
+        "slot": "relevance",
+        "sections": [
+          "tsfm",
           "evaluation"
         ]
       },
@@ -2705,6 +2688,19 @@
         ]
       },
       {
+        "title": "TurboMamba: Faster Inference, Faster Training, and Better Prediction with Lexical Memory",
+        "url": "http://arxiv.org/abs/2610.20682v1",
+        "summary": null,
+        "why_it_matters": null,
+        "score": 5.0,
+        "reason": "TurboMamba focuses on inference/training efficiency and token prediction; applicable to TSFM efficiency considerations but not core security.",
+        "slot": "relevance",
+        "sections": [
+          "efficiency",
+          "tsfm"
+        ]
+      },
+      {
         "title": "Temporal Leakage in Financial News NLP: A Multi-Architecture Audit with a Regime-Specific M&A Signal",
         "url": "http://arxiv.org/abs/2608.17223v1",
         "summary": "The paper audits temporal leakage in financial-news direction prediction across 49,799 articles and 16 model\u2013feature setups (TF-IDF, MiniLM, FinBERT, fine-tuned RoBERTa-large/DeBERTa-v3-large, and Llama-3/Qwen2.5 zero/few-shot and LoRA), finding random splits inflate MCC by 1.1\u00d7\u20136.5\u00d7, increasing with capacity and feature richness, and that end-to-end FinBERT fine-tuning further amplifies the gap (size-matched ratio 1.75\u00d7). Under near-chronological evaluation, only M&A shows a positive locked-test signal (TF-IDF MCC 0.138 train-only, 0.068 after train\u222aval refit; 10,000-permutation p < 10^{-3}), which does not transfer to FNSPID 2009\u20132020 U.S. data, suggesting localization to 2024\u20132025 European-tilted M&A semantics. Three role labelers indicate acquirer-tagged articles as the signal locus, and the authors argue chronological splits purge stale, predictable components, leaving a small, event-localized, lexically shallow residual and call for mandatory leakage audits in financial NLP benchmarks.",
@@ -2731,37 +2727,9 @@
           "evaluation",
           "adversarial-ml"
         ]
-      },
-      {
-        "title": "Efficient Multimodal Inference through Adaptive Acquisition and Sequential Fusion",
-        "url": "http://arxiv.org/abs/2610.07466v1",
-        "summary": null,
-        "why_it_matters": null,
-        "score": 4.0,
-        "reason": "Active feature acquisition evaluation from offline data relates to evaluation methodology and robustness in tabular TSFM contexts.",
-        "slot": "relevance",
-        "sections": [
-          "tsfm",
-          "evaluation",
-          "adversarial-ml"
-        ]
       }
     ],
     "agents": [
-      {
-        "title": "Proving the Utility of Large Language Models in Cybersecurity Simulations: A Comprehensive Examination",
-        "url": "http://arxiv.org/abs/2608.16422v1",
-        "summary": "The paper evaluates LLMs for cybersecurity simulations, using YAML to represent complex network configurations and to drive pipelines that support RL agent training. It compares LLM-based techniques to classical methods like Double Q-learning with PER, claiming improved efficiency, adaptability, and realism in cyberattack simulations. In benchmarks on multiple synthetic topologies, LLM-instantiated Python agents reached up to a 94.5% compromise rate and 0.02\u20130.06s per assessment, a ~25,000x\u201350,000x speedup over traditional RL cycles.",
-        "why_it_matters": "Shows LLM-driven generation/execution pipelines can massively accelerate cyber-sim training and evaluation, relevant to secure LLM autonomy and sim-to-real robustness for time-series/agentic models.",
-        "score": 8.0,
-        "reason": "Large-scale experimental evaluation of indirect prompt injection across channels and payloads maps closely to prompt-injection/jailbreak threat modeling and red-teaming methodology.",
-        "slot": "relevance",
-        "sections": [
-          "llm-security",
-          "agents",
-          "evaluation"
-        ]
-      },
       {
         "title": "FedLNS: Leverage LayerNorm Signature Modeling to Mitigate Adversarial Manipulation in Federated LLMs",
         "url": "http://arxiv.org/abs/2608.18736v1",
@@ -2774,20 +2742,6 @@
           "llm-security",
           "agents",
           "adversarial-ml"
-        ]
-      },
-      {
-        "title": "RouteGuard: Certifying Routing Gain in LLM Multi-Agent Systems When Complementarity Is Not Enough",
-        "url": "http://arxiv.org/abs/2608.07583v1",
-        "summary": "The paper shows that common assumptions for multi-agent LLM routing\u2014optimizing gate AUC and relying on advisor complementarity\u2014do not determine deployable gain, and introduces RouteGuard to certify routing benefit. It decomposes gain as G = \u03c0\u0394_E, identifies a conditional-regret functional \u03a6 as the governing quantity (not AUC), provides a finite-sample certification bracket with a matching Le Cam lower bound that is constant-sharp over the fixed-activity class, and observes a robustness phase transition. Experiments on RouterBench and OpenRCA demonstrate RouteGuard acting as a guardrail, certifying gain only under prompt-level sampling (not workload-cluster resampling) on RouterBench and refusing to certify on OpenRCA due to advisor redundancy, with pre-registered semi-synthetic controls confirming calibration thresholds.",
-        "why_it_matters": "It offers a principled, sample-sensitive certification of routing gain that can prevent illusory improvements in LLM multi-agent systems and aligns evaluation with deployment risk.",
-        "score": 7.0,
-        "reason": "Analyzes routing certification in LLM multi-advisor systems and provides finite-sample guarantees for when routing yields deployable gain\u2014relevant to safe agent composition, evaluation metrics beyond AUC, and deployment-risk assessment.",
-        "slot": "relevance",
-        "sections": [
-          "agents",
-          "llm-security",
-          "evaluation"
         ]
       },
       {
@@ -2937,20 +2891,6 @@
         "why_it_matters": null,
         "score": 5.0,
         "reason": "Item 2 on LLM unlearning and intervention effectiveness relates to security-related model control and agent safety.",
-        "slot": "relevance",
-        "sections": [
-          "llm-security",
-          "agents",
-          "evaluation"
-        ]
-      },
-      {
-        "title": "GNA: Granular Neighbor Assembly for Retrieval-Augmented Multivariate Time-Series Forecasting",
-        "url": "http://arxiv.org/abs/2609.36281v1",
-        "summary": null,
-        "why_it_matters": null,
-        "score": 5.0,
-        "reason": "Item 3 explores mid-training compute allocation for LLMs, with potential implications for security-focused training efficiency and evaluation.",
         "slot": "relevance",
         "sections": [
           "llm-security",
@@ -3056,6 +2996,19 @@
           "efficiency",
           "evaluation"
         ]
+      },
+      {
+        "title": "TurboMamba: Faster Inference, Faster Training, and Better Prediction with Lexical Memory",
+        "url": "http://arxiv.org/abs/2610.20682v1",
+        "summary": null,
+        "why_it_matters": null,
+        "score": 5.0,
+        "reason": "TurboMamba focuses on inference/training efficiency and token prediction; applicable to TSFM efficiency considerations but not core security.",
+        "slot": "relevance",
+        "sections": [
+          "efficiency",
+          "tsfm"
+        ]
       }
     ],
     "evaluation": [
@@ -3104,34 +3057,6 @@
         ]
       },
       {
-        "title": "Measuring Task-Agnostic Training Data Influence Across Language Model Pretraining",
-        "url": "http://arxiv.org/abs/2608.13515v1",
-        "summary": "The paper introduces a task-agnostic measure of training data influence that quantifies how much an example\u2019s gradient update reduces the squared distance to a run\u2019s final parameters, estimated from intermediate checkpoints without retraining. Applied to 18 Pythia and PolyPythia configurations, the method reveals systematic temporal shifts in influential data: literature-related data align more with the parameter trajectory early, while STEM data align more later. This qualitative crossover is broadly consistent across configurations, offering a tractable trajectory-level perspective that complements task-based influence analyses.",
-        "why_it_matters": "Gives a practical, retraining-free way to map which data sources steer pretraining trajectories over time, informing data curation, curriculum, and security-relevant provenance audits for LLMs.",
-        "score": 8.0,
-        "reason": "Proposes a task-agnostic measure of individual-example influence during LM pretraining which is highly relevant to data provenance, extraction/attribution, contamination, and training-time attack/defense analysis.",
-        "slot": "relevance",
-        "sections": [
-          "llm-security",
-          "adversarial-ml",
-          "evaluation"
-        ]
-      },
-      {
-        "title": "Proving the Utility of Large Language Models in Cybersecurity Simulations: A Comprehensive Examination",
-        "url": "http://arxiv.org/abs/2608.16422v1",
-        "summary": "The paper evaluates LLMs for cybersecurity simulations, using YAML to represent complex network configurations and to drive pipelines that support RL agent training. It compares LLM-based techniques to classical methods like Double Q-learning with PER, claiming improved efficiency, adaptability, and realism in cyberattack simulations. In benchmarks on multiple synthetic topologies, LLM-instantiated Python agents reached up to a 94.5% compromise rate and 0.02\u20130.06s per assessment, a ~25,000x\u201350,000x speedup over traditional RL cycles.",
-        "why_it_matters": "Shows LLM-driven generation/execution pipelines can massively accelerate cyber-sim training and evaluation, relevant to secure LLM autonomy and sim-to-real robustness for time-series/agentic models.",
-        "score": 8.0,
-        "reason": "Large-scale experimental evaluation of indirect prompt injection across channels and payloads maps closely to prompt-injection/jailbreak threat modeling and red-teaming methodology.",
-        "slot": "relevance",
-        "sections": [
-          "llm-security",
-          "agents",
-          "evaluation"
-        ]
-      },
-      {
         "title": "Climbing the Hill: Prompt Injection Red-Teaming Against Frontier Models with Curriculum Reinforcement Learning",
         "url": "http://arxiv.org/abs/2609.33628v1",
         "summary": "The work tackles prompt injection as a major security risk for LLMs and LLM-based agents by using RL-driven red-teaming to train attacker LLMs. It addresses the cold-start problem for frontier models (e.g., GPT-6-Luna) with curriculum learning, warming the attacker LLM through a sequence of increasingly robust targets and partial success at each stage. Empirical results show high ASR@10 against GPT-5.6-Luna and GPT-5.6-Terra, outperforming RL-Hammer and PISmith, with demonstrated transferability of attacker LLMs across multiple frontier LLMs; code is released.",
@@ -3174,6 +3099,20 @@
         ]
       },
       {
+        "title": "Priming Base Models for Agentic Post-Training: An Open Midtraining Recipe",
+        "url": "http://arxiv.org/abs/2610.22019v1",
+        "summary": null,
+        "why_it_matters": null,
+        "score": 8.0,
+        "reason": "Discusses agentic post-training and midtraining for LLMs\u2014highly relevant to agentic-security and evaluation of security implications in LLM pipelines.",
+        "slot": "relevance",
+        "sections": [
+          "llm-security",
+          "evaluation",
+          "longform"
+        ]
+      },
+      {
         "title": "Do All LLMs Know When They're Being Harmful? A Reproducibility Study of Latent-Space Safety Probes Across Model Families",
         "url": "http://arxiv.org/abs/2608.08029v1",
         "summary": "This study reproduces Khatri et al.\u2019s pipeline for training lightweight MLP probes on final-layer activations to detect harmful prompts, matching the original LLaMA-3.1-8B results within 0.37 F1 points (0.2 on BeaverTails). It extends the evaluation across Gemma-4-E4B, Mistral-7B-v0.3, and Qwen2-7B on WildJailbreak, BeaverTails, and AEGIS 2.0, finding F1 within about one point of the LLaMA-3.1-8B values using the same probe architecture. It also assesses nondeterminism by varying seeds and reports that final token latent vectors were invariant to seed across architectures.",
@@ -3185,20 +3124,6 @@
           "llm-security",
           "evaluation",
           "alignment"
-        ]
-      },
-      {
-        "title": "RouteGuard: Certifying Routing Gain in LLM Multi-Agent Systems When Complementarity Is Not Enough",
-        "url": "http://arxiv.org/abs/2608.07583v1",
-        "summary": "The paper shows that common assumptions for multi-agent LLM routing\u2014optimizing gate AUC and relying on advisor complementarity\u2014do not determine deployable gain, and introduces RouteGuard to certify routing benefit. It decomposes gain as G = \u03c0\u0394_E, identifies a conditional-regret functional \u03a6 as the governing quantity (not AUC), provides a finite-sample certification bracket with a matching Le Cam lower bound that is constant-sharp over the fixed-activity class, and observes a robustness phase transition. Experiments on RouterBench and OpenRCA demonstrate RouteGuard acting as a guardrail, certifying gain only under prompt-level sampling (not workload-cluster resampling) on RouterBench and refusing to certify on OpenRCA due to advisor redundancy, with pre-registered semi-synthetic controls confirming calibration thresholds.",
-        "why_it_matters": "It offers a principled, sample-sensitive certification of routing gain that can prevent illusory improvements in LLM multi-agent systems and aligns evaluation with deployment risk.",
-        "score": 7.0,
-        "reason": "Analyzes routing certification in LLM multi-advisor systems and provides finite-sample guarantees for when routing yields deployable gain\u2014relevant to safe agent composition, evaluation metrics beyond AUC, and deployment-risk assessment.",
-        "slot": "relevance",
-        "sections": [
-          "agents",
-          "llm-security",
-          "evaluation"
         ]
       },
       {
@@ -3240,20 +3165,6 @@
         "sections": [
           "agents",
           "tsfm",
-          "evaluation"
-        ]
-      },
-      {
-        "title": "No Free Efficiency: Revisiting the Trade-off Between Training Efficiency and Model Vulnerability",
-        "url": "http://arxiv.org/abs/2609.33898v1",
-        "summary": "Training efficiency strategies, including selective data sampling, efficient pre-training, and simplified RL pipelines, are explored for their impact on robustness. Across vision and language models, efficiency-oriented training is shown to increase susceptibility to adversarial and privacy attacks, with sharper loss geometry and systematic changes in internal representations. The study also analyzes zero RL training, finding greater catastrophic forgetting and overconfidence under simplified RL recipes, advocating for multi-objective training that balances performance, cost, and security.",
-        "why_it_matters": "Directly links efficiency gains to security/vulnerability concerns across domains, relevant to work on LLM security and time-series foundation models where efficiency-driven practices may affect robustness and privacy.",
-        "score": 7.0,
-        "reason": "Prompt injection red-teaming with curriculum RL directly targets frontier-model security and robustness evaluation.",
-        "slot": "relevance",
-        "sections": [
-          "llm-security",
-          "adversarial-ml",
           "evaluation"
         ]
       },
@@ -3313,15 +3224,15 @@
         ]
       },
       {
-        "title": "ProbGuard: Calibrated Safety Risk Estimation from LLM Output Distributions",
-        "url": "http://arxiv.org/abs/2608.10621v1",
-        "summary": "ProbGuard reframes LLM safety assessment as probabilistic risk estimation over the model\u2019s early output distribution rather than deterministic classification on completed token sequences. It estimates the probability of unsafe continuation via Monte Carlo over generated prefix distributions and calibrates this risk through post-training, enabling early stopping of unsafe generations. Empirically, it achieves the best calibration across nine model\u2013dataset settings (average Brier and ECE reduced by 79.6% and 71.9% vs. the best baseline) and caps jailbreak attack success to \u22641% after only the first ten decoding steps.",
-        "why_it_matters": "It operationalizes distribution-aware, early-stage safety control with strong calibration\u2014useful for red-teaming defenses, risk-sensitive deployment, and aligning with probabilistic guardrail research and time-series-style forecasting over generation trajectories.",
-        "score": 6.0,
-        "reason": "Proposes a novel metric (feature nonlocality) to assess abstraction level of learned features from sparse autoencoders; useful for mechanistic interpretability and evaluating claims about high-level features relevant to jailbreak/mechanistic work.",
+        "title": "Divergent Paths: Learning an Outcome-Predictive Representation of LLM Agent Trajectories",
+        "url": "http://arxiv.org/abs/2610.19614v1",
+        "summary": null,
+        "why_it_matters": null,
+        "score": 7.0,
+        "reason": "Learning outcome-predictive representations of agent trajectories informs security evaluation of agent behavior and failure modes.",
         "slot": "relevance",
         "sections": [
-          "alignment",
+          "llm-security",
           "adversarial-ml",
           "evaluation"
         ]
@@ -3436,20 +3347,6 @@
         ]
       },
       {
-        "title": "LightMTP: Lightweight Latent Multi-Token Prediction",
-        "url": "http://arxiv.org/abs/2610.06031v1",
-        "summary": "LightMTP proposes a lightweight latent multi-token prediction objective to extend supervision beyond the immediate next token without large parameter increases or external helper models. It bootstraps future token representations from the model\u2019s own hidden states and introduces two variants that predict more future tokens with no significant computational overhead compared to conventional MTP. The approach adds at most 1% extra parameters while maintaining strong performance on general language modeling benchmarks and achieving gains in planning, coding, and reasoning tasks.",
-        "why_it_matters": "It offers a parameter-efficient path to multi-token prediction that aligns with latent supervision ideas and avoids external encoders, potentially improving long-horizon structure capture in LLMs and time-series foundation models.",
-        "score": 6.0,
-        "reason": "Lightweight latent multi-token prediction; efficiency/architecture angle for next-token and multi-token forecasting in TS models.",
-        "slot": "relevance",
-        "sections": [
-          "tsfm",
-          "evaluation",
-          "has-code"
-        ]
-      },
-      {
         "title": "EvoRiskBench: An Evolving Benchmark for Runtime Security Risks in Workspace Agents",
         "url": "http://arxiv.org/abs/2610.03153v1",
         "summary": "EvoRiskBench is an evolving benchmark for runtime security risks in workspace agents, linking an initial risk entry point to a one-hop technical effect via an agent-mediated risk path within the EP-Path-EF framework. It defines nine entry-point categories and five effect categories, validated through a 20-participant study for interpretability and classification consistency, and uses an automated end-to-end workflow to construct, execute, and independently verify risk cases in isolated environments, producing a reproducible dataset of 450 adversarial tasks across six scenarios. Evaluation across nine model-harness configurations spanning three models and three harnesses reveals substantial vulnerabilities, with Codex + DeepSeek-V4-Pro-0813 achieving the highest attack success rate of 68.44%, while ASR varies more across models than harnesses and depends on model-harness pairing; the authors plan to release the benchmark cases and evaluation platform after safety and reproducibility checks.",
@@ -3516,6 +3413,33 @@
         "sections": [
           "tsfm",
           "efficiency",
+          "evaluation"
+        ]
+      },
+      {
+        "title": "TreeSpark: Learning to Draft the Trees You Verify for Speculative Decoding",
+        "url": "http://arxiv.org/abs/2610.20175v1",
+        "summary": null,
+        "why_it_matters": null,
+        "score": 6.0,
+        "reason": "TreeSpark deals with speculative decoding and training/inference efficiency for sequence models; tangential relevance to TSFM architectures and evaluation.",
+        "slot": "relevance",
+        "sections": [
+          "tsfm",
+          "evaluation"
+        ]
+      },
+      {
+        "title": "StableJudge: A Lightweight Adversarial Defense Framework for LLM-as-a-Judge",
+        "url": "http://arxiv.org/abs/2610.16814v1",
+        "summary": null,
+        "why_it_matters": null,
+        "score": 6.0,
+        "reason": "StableJudge proposes defenses for LLM-as-a-Judge against prompt-injection-based score hijacking; relevant to evaluation security.",
+        "slot": "relevance",
+        "sections": [
+          "llm-security",
+          "adversarial-ml",
           "evaluation"
         ]
       },
@@ -3659,20 +3583,6 @@
         ]
       },
       {
-        "title": "GNA: Granular Neighbor Assembly for Retrieval-Augmented Multivariate Time-Series Forecasting",
-        "url": "http://arxiv.org/abs/2609.36281v1",
-        "summary": null,
-        "why_it_matters": null,
-        "score": 5.0,
-        "reason": "Item 3 explores mid-training compute allocation for LLMs, with potential implications for security-focused training efficiency and evaluation.",
-        "slot": "relevance",
-        "sections": [
-          "llm-security",
-          "agents",
-          "evaluation"
-        ]
-      },
-      {
         "title": "LLM2Jev: LLMs Are Already Jev-Style Decision Models -- When and How to Fine-Tune Them",
         "url": "http://arxiv.org/abs/2610.02076v1",
         "summary": null,
@@ -3769,6 +3679,34 @@
         ]
       },
       {
+        "title": "AutoSec-RAN: Specification-Grounded LLM Fine-Tuning for Automated Security Analysis of O-RAN",
+        "url": "http://arxiv.org/abs/2610.15995v1",
+        "summary": null,
+        "why_it_matters": null,
+        "score": 5.0,
+        "reason": "AutoSec-RAN applies specification-grounded LLMs for automated security analysis of O-RAN; intersects LLM security evaluation and defense.",
+        "slot": "relevance",
+        "sections": [
+          "llm-security",
+          "evaluation",
+          "adversarial-ml"
+        ]
+      },
+      {
+        "title": "When Does Trust Help? A Leakage-Free Evaluation of Representation- and Aggregation-Based Defenses Against Backdoors in Federated Intrusion Detection",
+        "url": "http://arxiv.org/abs/2610.14767v1",
+        "summary": null,
+        "why_it_matters": null,
+        "score": 5.0,
+        "reason": "Leakage-free evaluation of defenses against backdoors in federated intrusion detection aligns with evaluation robustness and security evaluation.",
+        "slot": "relevance",
+        "sections": [
+          "adversarial-ml",
+          "evaluation",
+          "llm-security"
+        ]
+      },
+      {
         "title": "Cross-Corpus Evaluation of Generalizable Vulnerability Detection in IoT Firmware",
         "url": "http://arxiv.org/abs/2608.11492v1",
         "summary": "The paper introduces IoTVulBench, a human-verified, contamination-screened benchmark for cross-corpus IoT firmware vulnerability detection, and evaluates five model architectures, two tuning methods, and three curriculum strategies with ensemble, distillation, and robustness analyses. Models trained on IoTVulBench outperform matched single-source datasets (MCC 0.58 vs. 0.44 for PrimeVul and 0.39 for D2A), with staged curriculum learning raising MCC to 0.69 and a diversity-optimized ensemble reaching 0.73, surpassing a static analyzer (0.31) and PrimeVul by large margins while maintaining 86% performance under identifier renaming and showing strong calibration and largely faithful explanations. At a 0.5% FPR, the model missed 21% of vulnerabilities versus 71% for the strongest comparator, indicating domain-matched data and curriculum design\u2014not model scale alone\u2014drive generalization in firmware vulnerability detection.",
@@ -3821,19 +3759,20 @@
           "evaluation",
           "adversarial-ml"
         ]
-      },
+      }
+    ],
+    "model-releases": [
       {
-        "title": "Efficient Multimodal Inference through Adaptive Acquisition and Sequential Fusion",
-        "url": "http://arxiv.org/abs/2610.07466v1",
+        "title": "CT0: Cybersecurity Transformer",
+        "url": "http://arxiv.org/abs/2610.16550v1",
         "summary": null,
         "why_it_matters": null,
         "score": 4.0,
-        "reason": "Active feature acquisition evaluation from offline data relates to evaluation methodology and robustness in tabular TSFM contexts.",
+        "reason": "CT0/CT0-Micro cybersecurity transformer focuses on small security-oriented models; modest relevance to security-oriented TSFM and policy implications.",
         "slot": "relevance",
         "sections": [
-          "tsfm",
-          "evaluation",
-          "adversarial-ml"
+          "policy",
+          "model-releases"
         ]
       }
     ],
@@ -3851,9 +3790,35 @@
           "evaluation",
           "longform"
         ]
+      },
+      {
+        "title": "CT0: Cybersecurity Transformer",
+        "url": "http://arxiv.org/abs/2610.16550v1",
+        "summary": null,
+        "why_it_matters": null,
+        "score": 4.0,
+        "reason": "CT0/CT0-Micro cybersecurity transformer focuses on small security-oriented models; modest relevance to security-oriented TSFM and policy implications.",
+        "slot": "relevance",
+        "sections": [
+          "policy",
+          "model-releases"
+        ]
       }
     ],
     "longform": [
+      {
+        "title": "DataSense-Bench: The First Step Toward an AI Scientist",
+        "url": "http://arxiv.org/abs/2610.12190v1",
+        "summary": "DataSense-Bench investigates whether frontier AI models can reliably select data for training by tackling data selection and performance forecasting in ML. The study allows AI agents to inspect data, generate/run analysis code, and execute model forward passes to choose and rank candidate training subsets, which are then used to fine-tune a small LLM and evaluated under a standardized protocol. The benchmark uses OpenThoughts-Agent and EnvScaler trajectories (TBLite and BFCL evaluations) to assess post-training performance of top-ranked subsets and ranking accuracy, reporting limited selection gains over random choice and inconsistent ranking across tasks, with agents often relying on similar data signals but interpreting training value differently.",
+        "why_it_matters": "Directly relevant to data-centric ML and AI system evaluation, linking data selection quality to post-training impact and ranking reliability in LLM fine-tuning scenarios.",
+        "score": 7.0,
+        "reason": "Introduces a multivariate time-series foundation model with primitive-based pretraining\u2014core to TSFM and generalization across domains.",
+        "slot": "relevance",
+        "sections": [
+          "tsfm",
+          "longform"
+        ]
+      },
       {
         "title": "Poster: FedWM-Guard: Thwarting Imagination Poisoning in Federated World Model-based Autonomous Driving",
         "url": "http://arxiv.org/abs/2609.29178v1",
